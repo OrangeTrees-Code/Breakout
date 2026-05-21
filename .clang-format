@@ -1,0 +1,13 @@
+BasedOnStyle: LLVM
+
+ColumnLimit: 0
+
+BinPackParameters: true
+BinPackArguments: true
+
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+
+PenaltyBreakBeforeFirstCallParameter: 100000
+
+BreakBeforeBraces: Attach
