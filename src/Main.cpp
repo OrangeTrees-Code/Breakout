@@ -8,9 +8,11 @@
 int main() {
   Game breakout(800, 600);
 
-  Camera camera;
+  Camera mainCamera(breakout.Width, breakout.Height);
 
-  Window window(breakout.Width, breakout.Height, true, camera, breakout);
+  Window window(breakout.Width, breakout.Height, true, mainCamera, breakout);
+
+  breakout.Init(mainCamera);
 
   while (!glfwWindowShouldClose(window.Get_Window_Ptr())) {
     window.UpdateDeltaTime();

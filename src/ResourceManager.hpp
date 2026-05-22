@@ -10,10 +10,10 @@ class ResourceManager {
   using Path = std::filesystem::path;
 
 public:
-  static ResourceManager &Instance() {
-    static ResourceManager instance_;
-    return instance_;
-  }
+  Path ProjRoot = Path(PROJECT_ROOT);
+
+public:
+  static ResourceManager &Instance() { return instance_; }
 
   Shader &LoadShader(const std::string &name, const Path &vertPath, const Path &fragPath);
   Shader &LoadShader(const std::string &name, const Path &vertPath, const Path &fragPath, const Path &geomPath);
@@ -41,8 +41,10 @@ private:
                                  unsigned int fragmentShader);
 
 private:
+  static ResourceManager instance_;
+
   int success_;
-  char infoLog_[512];
+  std::array<char, 512> infoLog_;
   std::unordered_map<std::string, Shader> shaders_;
   std::unordered_map<std::string, Texture2D> textures_2d_;
 };

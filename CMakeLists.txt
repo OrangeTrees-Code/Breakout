@@ -18,6 +18,7 @@ add_executable(game
     src/ResourceManager.cpp
     src/Window.cpp
     src/Camera.cpp
+    src/RenderSprite.cpp
 )
 
 target_include_directories(game PRIVATE

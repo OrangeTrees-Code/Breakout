@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <utility>
 
+ResourceManager ResourceManager::instance_;
+
 namespace {
 std::string ReadTextFile(const std::filesystem::path &path) {
   std::ifstream file;
@@ -52,8 +54,8 @@ unsigned int ResourceManager::initVertexShader(const char *vertexShaderSource) {
   glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success_);
 
   if (!success_) {
-    glGetShaderInfoLog(vertexShader, sizeof(infoLog_), NULL, infoLog_);
-    throw std::runtime_error("ERROR::SHADER::VERTEX::COMPILATION_FAILED: " + std::string(infoLog_));
+    glGetShaderInfoLog(vertexShader, sizeof(infoLog_.data()), NULL, infoLog_.data());
+    throw std::runtime_error("ERROR::SHADER::VERTEX::COMPILATION_FAILED: " + std::string(infoLog_.data()));
   }
 
   return vertexShader;
@@ -68,8 +70,8 @@ unsigned int ResourceManager::initFragmentShader(const char *fragmentShaderSourc
   glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success_);
 
   if (!success_) {
-    glGetShaderInfoLog(fragmentShader, sizeof(infoLog_), NULL, infoLog_);
-    throw std::runtime_error("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: " + std::string(infoLog_));
+    glGetShaderInfoLog(fragmentShader, sizeof(infoLog_), NULL, infoLog_.data());
+    throw std::runtime_error("ERROR::SHADER::FRAGMENT::COMPILATION_FAILED: " + std::string(infoLog_.data()));
   }
 
   return fragmentShader;
@@ -84,8 +86,8 @@ unsigned int ResourceManager::initGeometryShader(const char *geometryShaderSourc
   glGetShaderiv(geometryShader, GL_COMPILE_STATUS, &success_);
 
   if (!success_) {
-    glGetShaderInfoLog(geometryShader, sizeof(infoLog_), NULL, infoLog_);
-    throw std::runtime_error("ERROR::SHADER::GEOMETRY::COMPILATION_FAILED: " + std::string(infoLog_));
+    glGetShaderInfoLog(geometryShader, sizeof(infoLog_.data()), NULL, infoLog_.data());
+    throw std::runtime_error("ERROR::SHADER::GEOMETRY::COMPILATION_FAILED: " + std::string(infoLog_.data()));
   }
 
   return geometryShader;
@@ -102,8 +104,8 @@ unsigned int ResourceManager::initShaderProgram(unsigned int vertexShader,
 
   glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success_);
   if (!success_) {
-    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog_);
-    throw std::runtime_error("ERROR::SHADER::PROGRAM::LINKING_FAILED: " + std::string(infoLog_));
+    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog_.data());
+    throw std::runtime_error("ERROR::SHADER::PROGRAM::LINKING_FAILED: " + std::string(infoLog_.data()));
   }
 
   return shaderProgram;
@@ -122,8 +124,8 @@ unsigned int ResourceManager::initShaderProgram(unsigned int vertexShader,
 
   glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success_);
   if (!success_) {
-    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog_);
-    throw std::runtime_error("ERROR::SHADER::PROGRAM::LINKING_FAILED: " + std::string(infoLog_));
+    glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog_.data());
+    throw std::runtime_error("ERROR::SHADER::PROGRAM::LINKING_FAILED: " + std::string(infoLog_.data()));
   }
 
   return shaderProgram;
@@ -224,6 +226,7 @@ Texture2D &ResourceManager::LoadTexture2D(const std::string &name,
   int height;
   int nrChannels;
   int desiredChannels = isAlpha ? STBI_rgb_alpha : STBI_rgb;
+  stbi_set_flip_vertically_on_load(true);
   unsigned char *data =
       stbi_load(texturePath.string().c_str(), &width, &height, &nrChannels,
                 desiredChannels);

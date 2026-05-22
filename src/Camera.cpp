@@ -9,20 +9,11 @@ glm::mat4 Camera::GetViewMatrix() {
   // return Global::Instance().MyLookAt(Position, Position + Front, Up);
 }
 
-glm::mat4 Camera::GetProjectionMatrix() {
+glm::mat4 Camera::GetProjectionMatrix_Persp(float zNear, float zFar) {
   return glm::perspective(glm::radians(FOV),
-                          (float)ViewWidth / (float)ViewHeight, 0.1f, 100.0f);
+                          (float)ViewWidth / (float)ViewHeight, zNear, zFar);
 }
 
-void Camera::UpdateCameraVec() {
-  glm::vec3 front;
-
-  const float pitch = glm::radians(Pitch);
-  const float yaw = glm::radians(Yaw);
-  front.x = std::cos(pitch) * std::cos(yaw);
-  front.y = std::sin(pitch);
-  front.z = std::cos(pitch) * std::sin(yaw);
-  Front = glm::normalize(front);
-  Right = glm::normalize(glm::cross(Front, glm::vec3(0.f,1.f,0.f)));
-  Up = glm::normalize(glm::cross(Right, Front));
+glm::mat4 Camera::GetProjectionMatrix_Ortho(float zNear, float zFar) {
+  return glm::ortho(0.f, (float)ViewWidth, 0.f, (float)ViewHeight, zNear, zFar);
 }
