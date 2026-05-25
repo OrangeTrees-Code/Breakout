@@ -2,12 +2,12 @@
 
 #include "Shader.tpp"
 #include "Texture2D.hpp"
-#include <filesystem>
 #include <string>
 #include <unordered_map>
+#include "Global.cpp"
 
 class ResourceManager {
-  using Path = std::filesystem::path;
+
 
 public:
   Path ProjRoot = Path(PROJECT_ROOT);

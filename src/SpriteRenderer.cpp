@@ -1,11 +1,11 @@
-#include "RenderSprite.hpp"
+#include "SpriteRenderer.hpp"
 #include "Shader.tpp"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 
-SpriteRender SpriteRender::instance_;
+SpriteRenderer SpriteRenderer::instance_;
 
-void SpriteRender::SetShader(Shader &shader) {
+void SpriteRenderer::SetShader(Shader &shader) {
   shader_ptr_ = &shader;
   if (!initialized_) {
     initRenderData();
@@ -13,7 +13,7 @@ void SpriteRender::SetShader(Shader &shader) {
   }
 }
 
-void SpriteRender::initRenderData() {
+void SpriteRenderer::initRenderData() {
   GLfloat vertices[] = {
       // 位置     // 纹理
       0.0f, 1.0f, 0.0f, 1.0f,
@@ -36,7 +36,7 @@ void SpriteRender::initRenderData() {
   glBindVertexArray(0);
 }
 
-void SpriteRender::DrawSprite(Texture2D &texture2d, glm::vec2 position, glm::vec2 scale, float rotateAngle, glm::vec3 color) {
+void SpriteRenderer::DrawSprite(Texture2D &texture2d, glm::vec2 position, glm::vec2 scale, float rotateAngle, glm::vec3 color) {
   glm::mat4 model(1.0f);
 
   model = glm::translate(model, glm::vec3(position, 0.f));

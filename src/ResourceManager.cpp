@@ -226,7 +226,7 @@ Texture2D &ResourceManager::LoadTexture2D(const std::string &name,
   int height;
   int nrChannels;
   int desiredChannels = isAlpha ? STBI_rgb_alpha : STBI_rgb;
-  stbi_set_flip_vertically_on_load(true);
+  // stbi_set_flip_vertically_on_load(true);
   unsigned char *data =
       stbi_load(texturePath.string().c_str(), &width, &height, &nrChannels,
                 desiredChannels);

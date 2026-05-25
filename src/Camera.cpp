@@ -15,5 +15,5 @@ glm::mat4 Camera::GetProjectionMatrix_Persp(float zNear, float zFar) {
 }
 
 glm::mat4 Camera::GetProjectionMatrix_Ortho(float zNear, float zFar) {
-  return glm::ortho(0.f, (float)ViewWidth, 0.f, (float)ViewHeight, zNear, zFar);
+  return glm::ortho(0.f, (float)ViewWidth, (float)ViewHeight, 0.f, zNear, zFar);
 }

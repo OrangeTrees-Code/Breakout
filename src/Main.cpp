@@ -18,7 +18,7 @@ int main() {
     window.UpdateDeltaTime();
     glfwPollEvents();
 
-    breakout.ProcessInput(window.deltaTime);
+    breakout.ProcessInput();
 
     breakout.Update(window.deltaTime);
 

@@ -18,7 +18,11 @@ add_executable(game
     src/ResourceManager.cpp
     src/Window.cpp
     src/Camera.cpp
-    src/RenderSprite.cpp
+    src/SpriteRenderer.cpp
+    src/GameObject.cpp
+    src/GameLevel.cpp
+    src/Global.cpp
+    src/Player.cpp
 )
 
 target_include_directories(game PRIVATE
