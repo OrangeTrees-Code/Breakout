@@ -22,7 +22,10 @@ add_executable(game
     src/GameObject.cpp
     src/GameLevel.cpp
     src/Global.cpp
-    src/Player.cpp
+    src/Paddle.cpp
+    src/DynamicGOBase.cpp
+    src/Ball.cpp
+    src/IManipulable.ipp
 )
 
 target_include_directories(game PRIVATE

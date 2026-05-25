@@ -5,8 +5,9 @@
 #include <array>
 #include <glad/glad.h>
 // opengl
+#include "Ball.hpp"
 #include "GameLevel.hpp"
-#include "Player.hpp"
+#include "Paddle.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 enum class GameState {
@@ -14,16 +15,8 @@ enum class GameState {
   GAME_MENU,
   GAME_Win,
 };
-enum class E_OutOfBound : unsigned int {
-  Nope = 0u,
-  Left = 1u,
-  Right = 2u,
-  Down = 4u,
-  Up = 8u,
-};
 
 class Game {
-  using OutOfBoundMask = unsigned int;
 
 public:
   Game(GLuint width, GLuint height) : Width(width), Height(height), State(GameState::GAME_ACTIVE) {};
@@ -40,9 +33,13 @@ public:
   GLuint Height;
   std::vector<GameLevel> Levels;
   int curr_level = 0;
-  std::unique_ptr<Player> PlayerObject;
+  std::unique_ptr<Paddle> PaddleObj;
+  std::unique_ptr<Ball> BallObj;
 
 private:
-private:
-  OutOfBoundMask isPlayerOutOfBound();
+  void initShader(Camera &mainCamera, Path &projroot);
+  void initSprite(Path &projroot);
+  void initLevel(Path &projroot);
+  void initPaddle();
+  void initBall();
 };
