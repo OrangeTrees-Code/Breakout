@@ -1,5 +1,7 @@
 #include "Ball.hpp"
 #include <GLFW/glfw3.h>
+#include <glm/common.hpp>
+#include <glm/geometric.hpp>
 
 void Ball::Move(float deltaTime, int width, int height) {
   if (this->IsStuck && this->launchPaddle_ != nullptr) {
@@ -27,4 +29,20 @@ void Ball::ManipulableHandle(std::array<bool, 1024> &Keys) {
   if (Keys[GLFW_KEY_SPACE]) {
     this->IsStuck = false;
   }
+}
+
+bool Ball::CheckCollision(const GameObject &other) {
+  glm::vec2 center(Position + glm::vec2(Radius, Radius));
+
+  glm::vec2 halfSize(Size.x / 2.f, Size.y / 2.f);
+
+  glm::vec2 boxCenter(other.Position + halfSize);
+
+  glm::vec2 diff = center - boxCenter;
+
+  diff = glm::clamp(diff, -halfSize, halfSize);
+
+  glm::vec2 closest = boxCenter + diff;
+
+  return glm::length(center - closest) < Radius;
 }

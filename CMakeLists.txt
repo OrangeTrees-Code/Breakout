@@ -26,6 +26,7 @@ add_executable(game
     src/DynamicGOBase.cpp
     src/Ball.cpp
     src/IManipulable.ipp
+    src/Brick.cpp
 )
 
 target_include_directories(game PRIVATE

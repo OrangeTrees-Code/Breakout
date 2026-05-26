@@ -18,4 +18,6 @@ public:
   GameObject();
   GameObject(const glm::vec2 &position, const glm::vec2 &size, Texture2D &sprite, const glm::vec3 &color = glm::vec3(1.f));
   virtual void Draw(SpriteRenderer &renderer);
+  virtual bool CheckCollision(const GameObject &other);
+  virtual void OnCollision(const GameObject &other);
 };

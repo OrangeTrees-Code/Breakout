@@ -1,4 +1,5 @@
 #include "DynamicGOBase.hpp"
+#include "GameObject.hpp"
 #include "Paddle.hpp"
 class Ball : public DynamicGOBase, public IManipulable {
 public:
@@ -12,6 +13,8 @@ public:
   void Move(float deltaTime, int width, int height) override;
   void ManipulableHandle(std::array<bool, 1024> &Keys) override;
   void SetLaunchPaddle(Paddle &paddle) { launchPaddle_ = &paddle; }
+
+  bool CheckCollision(const GameObject& other) override;
 
 private:
   Paddle *launchPaddle_ = nullptr;

@@ -1,5 +1,4 @@
 #include "GameLevel.hpp"
-#include "GameObject.hpp"
 #include "ResourceManager.hpp"
 #include <fstream>
 #include <sstream>
@@ -41,7 +40,7 @@ void GameLevel::init(std::vector<std::vector<unsigned int>> &tileData, int level
       case 0u:
         break;
       case 1u: {
-        GameObject brick(pos, size, ResourceManager::Instance().GetTexture("block_solid"), glm::vec3(0.8f, 0.8f, 0.7f));
+        Brick brick(pos, size, ResourceManager::Instance().GetTexture("block_solid"), glm::vec3(0.8f, 0.8f, 0.7f));
         brick.IsSolid = true;
         this->Bricks.push_back(brick);
         break;
@@ -56,7 +55,7 @@ void GameLevel::init(std::vector<std::vector<unsigned int>> &tileData, int level
           color = glm::vec3(0.8f, 0.8f, 0.4f);
         else if (tileData[y][x] == 5)
           color = glm::vec3(1.0f, 0.5f, 0.0f);
-        GameObject brick(pos, size, ResourceManager::Instance().GetTexture("block"), color);
+        Brick brick(pos, size, ResourceManager::Instance().GetTexture("block"), color);
         brick.IsSolid = false;
         this->Bricks.push_back(brick);
         ++DestroyableCount;

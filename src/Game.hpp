@@ -25,6 +25,7 @@ public:
   void ProcessInput();
   void Update(GLfloat dt);
   void Render();
+  void DoCollision();
 
 public:
   GameState State;

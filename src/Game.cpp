@@ -44,6 +44,7 @@ void Game::Update(GLfloat dt) {
   if (this->State == GameState::GAME_ACTIVE) {
     this->PaddleObj->Move(dt, this->Width, this->Height);
     this->BallObj->Move(dt, this->Width, this->Height);
+    DoCollision();
   }
 }
 
@@ -83,4 +84,12 @@ void Game::initBall() {
   const glm::vec2 initPos = PaddleObj->Position + glm::vec2(PaddleObj->Size.x / 2.f - initRadius, -initRadius * 2.f);
   BallObj = std::make_unique<Ball>(initRadius, true, initPos, initSize, faceTex, glm::vec3(1.f), initVelocity);
   BallObj->SetLaunchPaddle(*(this->PaddleObj));
+}
+
+void Game::DoCollision() {
+  for (auto &b : Levels[curr_level].Bricks) {
+    if (!b.Destroyed && BallObj->CheckCollision(b)) {
+      b.OnCollision(*BallObj);
+    }
+  }
 }
