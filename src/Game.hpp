@@ -26,6 +26,8 @@ public:
   void Update(GLfloat dt);
   void Render();
   void DoCollision();
+  void Fail();
+  void Reset();
 
 public:
   GameState State;

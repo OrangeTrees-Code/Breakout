@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Brick.hpp"
 #include "Global.cpp"
 #include "SpriteRenderer.hpp"
@@ -13,4 +15,5 @@ public:
 
   bool IsCompleted();
   void init(std::vector<std::vector<unsigned int>> &tileData, int levelWidth, int levelHeight);
+  void Reset();
 };

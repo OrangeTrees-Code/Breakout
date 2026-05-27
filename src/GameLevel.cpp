@@ -77,3 +77,10 @@ void GameLevel::Draw(SpriteRenderer &renderer) {
 bool GameLevel::IsCompleted() {
   return this->DestroyableCount == 0;
 }
+
+void GameLevel::Reset() {
+  for (auto &brick : Bricks) {
+    brick.Reset();
+    ++DestroyableCount;
+  }
+}

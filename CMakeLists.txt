@@ -27,6 +27,8 @@ add_executable(game
     src/Ball.cpp
     src/IManipulable.ipp
     src/Brick.cpp
+    src/ICollision.ipp
+    src/Event.hpp
 )
 
 target_include_directories(game PRIVATE

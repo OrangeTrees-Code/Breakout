@@ -81,15 +81,36 @@ void Game::initBall() {
   const float initRadius = 12.5f;
   auto &faceTex = ResourceManager::Instance().GetTexture("face");
   const glm::vec2 initSize(initRadius * 2.f);
-  const glm::vec2 initPos = PaddleObj->Position + glm::vec2(PaddleObj->Size.x / 2.f - initRadius, -initRadius * 2.f);
+  const glm::vec2 initPos = PaddleObj->Position + glm::vec2(PaddleObj->Size.x / 2.f - initRadius, -initRadius * 2.f - 0.01f);
   BallObj = std::make_unique<Ball>(initRadius, true, initPos, initSize, faceTex, glm::vec3(1.f), initVelocity);
   BallObj->SetLaunchPaddle(*(this->PaddleObj));
+  auto GameFail = [this]() { this->Fail(); };
+  BallObj->OnOutOfBound.Subscribe(GameFail);
 }
 
 void Game::DoCollision() {
-  for (auto &b : Levels[curr_level].Bricks) {
-    if (!b.Destroyed && BallObj->CheckCollision(b)) {
-      b.OnCollision(*BallObj);
+  for (auto &brick : Levels[curr_level].Bricks) {
+    // TODO
+    if (!brick.Destroyed) {
+      if (auto colliInfo = BallObj->CheckCollision(brick); std::get<0>(colliInfo)) {
+        brick.OnCollision(*BallObj, colliInfo);
+        BallObj->OnCollision(brick, colliInfo);
+        this->Levels[this->curr_level].DestroyableCount--;
+      }
     }
   }
+  if (auto colliInfo = BallObj->CheckCollision(*PaddleObj); std::get<0>(colliInfo)) {
+    BallObj->OnCollision(*PaddleObj, colliInfo);
+  }
+}
+void Game::Reset() {
+  for (auto &lv : Levels) {
+    lv.Reset();
+  }
+  PaddleObj->Reset(this->Width, this->Height);
+  BallObj->Reset(*PaddleObj);
+}
+
+void Game::Fail() {
+  Reset();
 }

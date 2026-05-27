@@ -2,17 +2,17 @@
 void Paddle::Move(float deltaTime, int width, int height) {
   if (this->Velocity != glm::vec2(0.f, 0.f)) {
     this->Position += this->Velocity * deltaTime;
-    if (OutOfBoundMask outType = isObjectOutOfBound(width, height); outType != (OutOfBoundMask)E_OutOfBound::Nope) {
-      if (outType & (OutOfBoundMask)E_OutOfBound::Left) {
+    if (BoundMaskType outType = isObjectOutOfBound(width, height); outType != (BoundMaskType)E_CrossBound::Nope) {
+      if (outType & (BoundMaskType)E_CrossBound::Left) {
         this->Position.x = 0;
       }
-      if (outType & (OutOfBoundMask)E_OutOfBound::Right) {
+      if (outType & (BoundMaskType)E_CrossBound::Right) {
         this->Position.x = width - this->Size.x;
       }
-      if (outType & (OutOfBoundMask)E_OutOfBound::Up) {
+      if (outType & (BoundMaskType)E_CrossBound::Up) {
         this->Position.y = 0;
       }
-      if (outType & (OutOfBoundMask)E_OutOfBound::Down) {
+      if (outType & (BoundMaskType)E_CrossBound::Down) {
         this->Position.y = height - this->Size.y;
       }
     }
@@ -33,4 +33,8 @@ void Paddle::ManipulableHandle(std::array<bool, 1024> &Keys) {
   if (Keys[GLFW_KEY_S]) {
     this->Velocity.y = 500.f;
   }
+}
+
+void Paddle::Reset(int width, int height) {
+  this->Position = glm::vec2((float)width / 2 - Size.x / 2, height - Size.y);
 }
