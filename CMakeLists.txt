@@ -29,6 +29,8 @@ add_executable(game
     src/Brick.cpp
     src/ICollision.ipp
     src/Event.hpp
+    src/ParticleObject.hpp
+    src/ParticleGenerator.cpp
 )
 
 target_include_directories(game PRIVATE

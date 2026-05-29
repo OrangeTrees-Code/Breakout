@@ -26,4 +26,5 @@ public:
 
 protected:
   BoundMaskType isObjectOutOfBound(int width, int height);
+  void Move(float deltaTime, int width, int height) override {}
 };

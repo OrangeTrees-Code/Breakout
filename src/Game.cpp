@@ -20,6 +20,8 @@ void Game::Init(Camera &mainCamera) {
   initPaddle();
 
   initBall();
+
+  initParticleSystem();
 }
 
 void Game::Render() {
@@ -29,6 +31,7 @@ void Game::Render() {
     this->Levels[this->curr_level].Draw(SpriteRenderer::Instance());
 
     PaddleObj->Draw(SpriteRenderer::Instance());
+    ParticleSystem->Render();
     BallObj->Draw(SpriteRenderer::Instance());
   }
 }
@@ -45,23 +48,33 @@ void Game::Update(GLfloat dt) {
     this->PaddleObj->Move(dt, this->Width, this->Height);
     this->BallObj->Move(dt, this->Width, this->Height);
     DoCollision();
+    ParticleSystem->Update(dt, *BallObj);
   }
 }
 
 void Game::initShader(Camera &mainCamera, Path &projroot) {
-  auto &shader = ResourceManager::Instance().LoadShader("default_sprite_shader", projroot / "src/shader/sprite.vert", projroot / "src/shader/sprite.frag");
-  SpriteRenderer::Instance().SetShader(shader);
-  shader.Use();
-  shader.SetUniform("projection", mainCamera.GetProjectionMatrix_Ortho());
-  shader.SetUniform("image", 0);
+  {
+    auto &shader = ResourceManager::Instance().LoadShader("default_sprite_shader", projroot / "src/shader/sprite.vert", projroot / "src/shader/sprite.frag");
+    shader.Use();
+    shader.SetUniform("projection", mainCamera.GetProjectionMatrix_Ortho());
+    shader.SetUniform("image", 0);
+  }
+  {
+    auto &shader = ResourceManager::Instance().LoadShader("default_particle_shader", projroot / "src/shader/particle.vert", projroot / "src/shader/particle.frag");
+    shader.Use();
+    shader.SetUniform("projection", mainCamera.GetProjectionMatrix_Ortho());
+    shader.SetUniform("sprite", 1);
+  }
 }
 
 void Game::initSprite(Path &projroot) {
+  SpriteRenderer::Instance().SetShader(ResourceManager::Instance().GetShader("default_sprite_shader"));
   ResourceManager::Instance().LoadTexture2D("face", projroot / "res/texture/awesomeface.png", true);
   ResourceManager::Instance().LoadTexture2D("background", projroot / "res/texture/background.jpg", false);
   ResourceManager::Instance().LoadTexture2D("block", projroot / "res/texture/block.png", false);
   ResourceManager::Instance().LoadTexture2D("block_solid", projroot / "res/texture/block_solid.png", true);
   ResourceManager::Instance().LoadTexture2D("paddle", projroot / "res/texture/paddle.png", true);
+  ResourceManager::Instance().LoadTexture2D("particle", projroot / "res/texture/particle.png");
 }
 void Game::initLevel(Path &projroot) {
   for (int i : std::ranges::views::iota(0, 4)) {
@@ -88,6 +101,14 @@ void Game::initBall() {
   BallObj->OnOutOfBound.Subscribe(GameFail);
 }
 
+void Game::initParticleSystem() {
+  const int initTotal = 500;
+  const int initNew = 2;
+  const glm::vec2 initOffset(BallObj->Radius / 4);
+  auto &shader = ResourceManager::Instance().GetShader("default_particle_shader");
+  auto &sprite = ResourceManager::Instance().GetTexture("particle");
+  ParticleSystem = std::make_unique<ParticleGenertor>(initTotal, initNew, initOffset, shader, sprite);
+}
 void Game::DoCollision() {
   for (auto &brick : Levels[curr_level].Bricks) {
     // TODO
@@ -95,7 +116,16 @@ void Game::DoCollision() {
       if (auto colliInfo = BallObj->CheckCollision(brick); std::get<0>(colliInfo)) {
         brick.OnCollision(*BallObj, colliInfo);
         BallObj->OnCollision(brick, colliInfo);
-        this->Levels[this->curr_level].DestroyableCount--;
+        if (brick.IsSolid == false) {
+          this->Levels[this->curr_level].DestroyableCount--;
+          if (this->Levels[curr_level].IsCompleted()) {
+            ++this->curr_level;
+            Reset();
+          }
+        }
+      }
+      if (auto colliInfo = PaddleObj->CheckCollision(brick); std::get<0>(colliInfo)) {
+        PaddleObj->OnCollision(brick, colliInfo);
       }
     }
   }

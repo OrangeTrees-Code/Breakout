@@ -1,6 +1,7 @@
 #include "Ball.hpp"
 #include "DynamicGOBase.hpp"
 #include "GameObject.hpp"
+#include "Paddle.hpp"
 #include <GLFW/glfw3.h>
 #include <glm/common.hpp>
 #include <glm/geometric.hpp>
@@ -91,6 +92,7 @@ void Ball::OnCollision(const GameObject &other, CollisionInfo_Type &collisionInf
   }
   case E_ObjectType::Paddle: {
     if (this->IsStuck == false) {
+
       auto colliType = std::get<1>(collisionInfo);
       if (colliType & (BoundMaskType)E_CrossBound::Left) {
         this->Position.x = other.Position.x - this->Size.x;
@@ -104,6 +106,9 @@ void Ball::OnCollision(const GameObject &other, CollisionInfo_Type &collisionInf
       } else if (colliType & (BoundMaskType)E_CrossBound::Down) {
         handleColliWithPaddle(other, false);
       }
+
+      auto paddle = dynamic_cast<const DynamicGOBase &>(other);
+      this->Velocity += paddle.Velocity * 0.25f;
     }
     break;
   }

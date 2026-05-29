@@ -17,10 +17,3 @@ DynamicGOBase::BoundMaskType DynamicGOBase::isObjectOutOfBound(int width, int he
   return result;
 }
 
-// DynamicGOBase::CollisionInfo_Type DynamicGOBase::CheckCollision(const GameObject &other) {
-//   // bool collisionX = this->Position.x + this->Size.x >= other.Position.x &&
-//   //                   other.Position.x + other.Size.x >= this->Position.x;
-//   // bool collisionY = this->Position.y + this->Size.y >= other.Position.y &&
-//   //                   other.Position.y + other.Size.y >= this->Position.y;
-//   // return collisionX && collisionY;
-// }

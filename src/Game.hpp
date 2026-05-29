@@ -8,6 +8,7 @@
 #include "Ball.hpp"
 #include "GameLevel.hpp"
 #include "Paddle.hpp"
+#include "ParticleGenerator.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 enum class GameState {
@@ -38,6 +39,7 @@ public:
   int curr_level = 0;
   std::unique_ptr<Paddle> PaddleObj;
   std::unique_ptr<Ball> BallObj;
+  std::unique_ptr<ParticleGenertor> ParticleSystem;
 
 private:
   void initShader(Camera &mainCamera, Path &projroot);
@@ -45,4 +47,5 @@ private:
   void initLevel(Path &projroot);
   void initPaddle();
   void initBall();
+  void initParticleSystem();
 };
