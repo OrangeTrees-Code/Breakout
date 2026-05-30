@@ -39,8 +39,8 @@ GLFWwindow *Window::WindowInit(bool isTransparent) {
   glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
   glViewport(0, 0, fbWidth, fbHeight);
 
-  this->frameBufferWidth_ = fbWidth;
-  this->frameBufferHeight_ = fbHeight;
+  this->FrameBufferWidth = fbWidth;
+  this->FrameBufferHeight = fbHeight;
 
   glfwSetWindowUserPointer(window, this);
   // glEnable(GL_CULL_FACE);
@@ -77,5 +77,5 @@ void Window::ResetViewPort(int width, int height) {
   glViewport(0, 0, width, height);
 }
 void Window::ResetViewPort() {
-  this->ResetViewPort(frameBufferWidth_, frameBufferHeight_);
+  this->ResetViewPort(FrameBufferWidth, FrameBufferHeight);
 }

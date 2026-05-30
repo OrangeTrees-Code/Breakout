@@ -21,6 +21,7 @@ int Shader::GetUniformLocation(const std::string &name) const {
   int location = glGetUniformLocation(this->Get_ID(), name.c_str());
   uniformCache_[name] = location;
   return location;
+  
 }
 
 void Shader::release()  {

@@ -33,7 +33,7 @@ public:
   unsigned int Get_ID() const;
 
   template <typename T>
-  void SetUniform(const std::string &name, const T &value) const;
+  void SetUniform(const std::string &name, const T &value, const int length = -1) const;
 
 private:
   template <typename T>
@@ -48,9 +48,18 @@ private:
 };
 
 template <typename T>
-void Shader::SetUniform(const std::string &name, const T &value) const {
-  int location = GetUniformLocation(name);
-  SetUniformImpl(location, value);
+void Shader::SetUniform(const std::string &name, const T &value, const int length) const {
+
+  if constexpr (std::is_array_v<std::remove_cvref_t<T>>) {
+    int location;
+    for (int i = 0; i < length; ++i) {
+      location = GetUniformLocation(name + "[" + std::to_string(i) + "]");
+      SetUniformImpl(location, value[i]);
+    }
+  } else {
+    int location = GetUniformLocation(name);
+    SetUniformImpl(location, value);
+  }
 }
 
 template <typename T>
@@ -64,36 +73,36 @@ inline void Shader::SetUniformImpl<int>(int location, const int &value) const {
 }
 
 template <>
-inline void Shader::SetUniformImpl<float>(int location,
-                                          const float &value) const {
+inline void Shader::SetUniformImpl<float>(int location, const float &value) const {
   glUniform1f(location, value);
 }
 
 template <>
-inline void Shader::SetUniformImpl<bool>(int location,
-                                         const bool &value) const {
+inline void Shader::SetUniformImpl<bool>(int location, const bool &value) const {
   glUniform1i(location, (int)value);
 }
 
 template <>
-inline void Shader::SetUniformImpl<glm::vec3>(int location,
-                                              const glm::vec3 &value) const {
+inline void Shader::SetUniformImpl<glm::vec3>(int location, const glm::vec3 &value) const {
   glUniform3fv(location, 1, glm::value_ptr(value));
 }
 
 template <>
-inline void Shader::SetUniformImpl<glm::vec4>(int location,
-                                              const glm::vec4 &value) const {
+inline void Shader::SetUniformImpl<glm::vec4>(int location, const glm::vec4 &value) const {
   glUniform4fv(location, 1, glm::value_ptr(value));
-}
-
-template <>
-inline void Shader::SetUniformImpl<glm::mat4>(int location,
-                                              const glm::mat4 &value) const {
-  glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }
 
 template <>
 inline void Shader::SetUniformImpl<glm::vec2>(int location, const glm::vec2 &value) const {
   glUniform2fv(location, 1, glm::value_ptr(value));
+}
+
+template <>
+inline void Shader::SetUniformImpl<glm::mat4>(int location, const glm::mat4 &value) const {
+  glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(value));
+}
+
+template <>
+inline void Shader::SetUniformImpl<glm::mat3>(int location, const glm::mat3 &value) const {
+  glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(value));
 }

@@ -7,20 +7,20 @@
 ** option) any later version.
 ******************************************************************/
 
-#include <glad/glad.h>
 #include "Texture2D.hpp"
+#include <glad/glad.h>
 
 Texture2D::Texture2D()
-    : width_(0), height_(0), internal_format_(GL_RGB), image_format_(GL_RGB), wrap_s_(GL_REPEAT), wrap_t_(GL_REPEAT), filter_min_(GL_LINEAR), filter_max_(GL_LINEAR) {
+    : Width(0), Height(0), Internal_format(GL_RGB), Image_format(GL_RGB), Wrap_s(GL_REPEAT), Wrap_t(GL_REPEAT), Filter_min(GL_LINEAR), Filter_max(GL_LINEAR) {
   glGenTextures(1, &this->id_);
 }
 
 Texture2D::Texture2D(Texture2D &&other) noexcept
-    : id_(other.id_), width_(other.width_), height_(other.height_),
-      internal_format_(other.internal_format_),
-      image_format_(other.image_format_), wrap_s_(other.wrap_s_),
-      wrap_t_(other.wrap_t_), filter_min_(other.filter_min_),
-      filter_max_(other.filter_max_) {
+    : id_(other.id_), Width(other.Width), Height(other.Height),
+      Internal_format(other.Internal_format),
+      Image_format(other.Image_format), Wrap_s(other.Wrap_s),
+      Wrap_t(other.Wrap_t), Filter_min(other.Filter_min),
+      Filter_max(other.Filter_max) {
   other.id_ = 0;
 }
 
@@ -28,30 +28,30 @@ Texture2D &Texture2D::operator=(Texture2D &&other) noexcept {
   if (this != &other) {
     release();
     id_ = other.id_;
-    width_ = other.width_;
-    height_ = other.height_;
-    internal_format_ = other.internal_format_;
-    image_format_ = other.image_format_;
-    wrap_s_ = other.wrap_s_;
-    wrap_t_ = other.wrap_t_;
-    filter_min_ = other.filter_min_;
-    filter_max_ = other.filter_max_;
+    Width = other.Width;
+    Height = other.Height;
+    Internal_format = other.Internal_format;
+    Image_format = other.Image_format;
+    Wrap_s = other.Wrap_s;
+    Wrap_t = other.Wrap_t;
+    Filter_min = other.Filter_min;
+    Filter_max = other.Filter_max;
     other.id_ = 0;
   }
   return *this;
 }
 
-void Texture2D::Generate(GLuint width, GLuint height, unsigned char *data) {
-  this->width_ = width;
-  this->height_ = height;
+void Texture2D::generate(GLuint width, GLuint height, unsigned char *data) {
+  this->Width = width;
+  this->Height = height;
   // Create Texture
   glBindTexture(GL_TEXTURE_2D, this->id_);
-  glTexImage2D(GL_TEXTURE_2D, 0, this->internal_format_, width, height, 0, this->image_format_, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, this->Internal_format, width, height, 0, this->Image_format, GL_UNSIGNED_BYTE, data);
   // Set Texture wrap and filter modes
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, this->wrap_s_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, this->wrap_t_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, this->filter_min_);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, this->filter_max_);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, this->Wrap_s);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, this->Wrap_t);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, this->Filter_min);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, this->Filter_max);
   // Unbind texture
   glBindTexture(GL_TEXTURE_2D, 0);
 }

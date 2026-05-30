@@ -218,8 +218,8 @@ Texture2D &ResourceManager::LoadTexture2D(const std::string &name,
 
   Texture2D texture;
   if (isAlpha) {
-    texture.internal_format_ = GL_RGBA;
-    texture.image_format_ = GL_RGBA;
+    texture.Internal_format = GL_RGBA;
+    texture.Image_format = GL_RGBA;
   }
 
   int width;
@@ -236,9 +236,26 @@ Texture2D &ResourceManager::LoadTexture2D(const std::string &name,
                              texturePath.string());
   }
 
-  texture.Generate(static_cast<GLuint>(width), static_cast<GLuint>(height),
+  texture.generate(static_cast<GLuint>(width), static_cast<GLuint>(height),
                    data);
   stbi_image_free(data);
+
+  auto [it, inserted] = textures_2d_.emplace(name, std::move(texture));
+  return it->second;
+}
+
+Texture2D &ResourceManager::LoadEmptyTextureBuffer(const std::string &name, int width, int height, bool isAlpha) {
+  if (textures_2d_.contains(name)) {
+    throw std::runtime_error("ERROR::RESOURCEMANAGER::LoadTexture2D: " + name + " already exist!");
+  }
+
+  Texture2D texture;
+  if (isAlpha) {
+    texture.Internal_format = GL_RGBA;
+    texture.Image_format = GL_RGBA;
+  }
+
+  texture.generate(static_cast<GLuint>(width), static_cast<GLuint>(height), NULL);
 
   auto [it, inserted] = textures_2d_.emplace(name, std::move(texture));
   return it->second;

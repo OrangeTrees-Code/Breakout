@@ -3,6 +3,7 @@ project(Breakout)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED on)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
 
@@ -31,6 +32,8 @@ add_executable(game
     src/Event.hpp
     src/ParticleObject.hpp
     src/ParticleGenerator.cpp
+    src/PostProcessor.cpp
+    src/Primitive.cpp
 )
 
 target_include_directories(game PRIVATE

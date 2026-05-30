@@ -9,6 +9,7 @@
 #include "GameLevel.hpp"
 #include "Paddle.hpp"
 #include "ParticleGenerator.hpp"
+#include "PostProcessor.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 enum class GameState {
@@ -22,7 +23,7 @@ class Game {
 public:
   Game(GLuint width, GLuint height) : Width(width), Height(height), State(GameState::GAME_ACTIVE) {};
   ~Game() = default;
-  void Init(Camera &mainCamera);
+  void Init(Camera &mainCamera, int framebuffer_width, int framebuffer_height);
   void ProcessInput();
   void Update(GLfloat dt);
   void Render();
@@ -40,12 +41,17 @@ public:
   std::unique_ptr<Paddle> PaddleObj;
   std::unique_ptr<Ball> BallObj;
   std::unique_ptr<ParticleGenertor> ParticleSystem;
+  std::unique_ptr<PostProcessor> PostProcessorModule;
 
 private:
   void initShader(Camera &mainCamera, Path &projroot);
-  void initSprite(Path &projroot);
+  void initSprite(Path &projroot, int framebuffer_width, int framebuffer_height);
   void initLevel(Path &projroot);
   void initPaddle();
   void initBall();
   void initParticleSystem();
+  void initPostProcessor(int framebuffer_width, int framebuffer_height);
+
+private:
+  float shakeTime_ = 0.f;
 };

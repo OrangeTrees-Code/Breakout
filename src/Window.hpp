@@ -17,13 +17,15 @@ public:
   const int Width = 0;
   const int Height = 0;
   Camera &MainCamera;
-  Game& GameProgram;
+  Game &GameProgram;
+  int FrameBufferWidth;
+  int FrameBufferHeight;
 
 public:
-  Window(int width, int height, bool isTransparent, Camera &mainCamera,Game& game,
+  Window(int width, int height, bool isTransparent, Camera &mainCamera, Game &game,
          float cursorSensitivity = 0.005f, float scrollSensitivity = 1.0f)
       : Width(width), Height(height), window_ptr_(WindowInit(isTransparent)),
-        MainCamera(mainCamera),GameProgram(game) {
+        MainCamera(mainCamera), GameProgram(game) {
     if (window_ptr_.get() == NULL) {
       throw std::runtime_error("Window Create Fail!");
     }
@@ -33,8 +35,6 @@ public:
   void ResetViewPort();
 
   void UpdateDeltaTime();
-  int GetFrameBufferWidth() const { return frameBufferWidth_; }
-  int GetFrameBufferHeight() const { return frameBufferHeight_; }
 
 private:
   struct GLFWwindowDeleter {
@@ -49,9 +49,6 @@ private:
   float currentFrame = 0.0f;
   float lastFrame = 0.0f;
   WindowPtr window_ptr_;
-
-  int frameBufferWidth_;
-  int frameBufferHeight_;
 
 private:
   GLFWwindow *WindowInit(bool isTransparent);

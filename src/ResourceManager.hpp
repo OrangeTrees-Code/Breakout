@@ -1,13 +1,12 @@
 #pragma once
 
+#include "Global.cpp"
 #include "Shader.tpp"
 #include "Texture2D.hpp"
 #include <string>
 #include <unordered_map>
-#include "Global.cpp"
 
 class ResourceManager {
-
 
 public:
   Path ProjRoot = Path(PROJECT_ROOT);
@@ -20,6 +19,7 @@ public:
   Shader &GetShader(const std::string &name);
 
   Texture2D &LoadTexture2D(const std::string &name, const Path &texturePath, bool isAlpha = false);
+  Texture2D &LoadEmptyTextureBuffer(const std::string &name, int width, int height, bool isAlpha = false);
   Texture2D &GetTexture(const std::string &name);
 
   void Clear();

@@ -1,4 +1,5 @@
 #include "SpriteRenderer.hpp"
+#include "Primitive.hpp"
 #include "Shader.tpp"
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
@@ -14,22 +15,12 @@ void SpriteRenderer::SetShader(Shader &shader) {
 }
 
 void SpriteRenderer::initRenderData() {
-  GLfloat vertices[] = {
-      // 位置     // 纹理
-      0.0f, 1.0f, 0.0f, 1.0f,
-      0.0f, 0.0f, 0.0f, 0.0f,
-      1.0f, 0.0f, 1.0f, 0.0f,
-
-      0.0f, 1.0f, 0.0f, 1.0f,
-      1.0f, 0.0f, 1.0f, 0.0f,
-      1.0f, 1.0f, 1.0f, 1.0f};
-
   GLuint vbo;
   glGenVertexArrays(1, &vao_);
   glGenBuffers(1, &vbo);
   glBindVertexArray(vao_);
   glBindBuffer(GL_ARRAY_BUFFER, vbo);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Quad::unitVertices), Quad::unitVertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
   glBindBuffer(GL_ARRAY_BUFFER, 0);

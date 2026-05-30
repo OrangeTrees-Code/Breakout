@@ -12,7 +12,7 @@ int main() {
 
   Window window(breakout.Width, breakout.Height, true, mainCamera, breakout);
 
-  breakout.Init(mainCamera);
+  breakout.Init(mainCamera, window.FrameBufferWidth, window.FrameBufferHeight);
 
   while (!glfwWindowShouldClose(window.Get_Window_Ptr())) {
     window.UpdateDeltaTime();
@@ -22,8 +22,6 @@ int main() {
 
     breakout.Update(window.deltaTime);
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
     breakout.Render();
 
     glfwSwapBuffers(window.Get_Window_Ptr());

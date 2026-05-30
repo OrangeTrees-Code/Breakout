@@ -8,12 +8,12 @@
 #include <ranges>
 #include <string>
 
-void Game::Init(Camera &mainCamera) {
+void Game::Init(Camera &mainCamera, int framebuffer_width, int framebuffer_height) {
   auto &projroot = ResourceManager::Instance().ProjRoot;
 
   initShader(mainCamera, projroot);
 
-  initSprite(projroot);
+  initSprite(projroot, framebuffer_width, framebuffer_height);
 
   initLevel(projroot);
 
@@ -22,17 +22,25 @@ void Game::Init(Camera &mainCamera) {
   initBall();
 
   initParticleSystem();
+
+  initPostProcessor(framebuffer_width, framebuffer_height);
 }
 
 void Game::Render() {
   if (this->State == GameState::GAME_ACTIVE) {
-    SpriteRenderer::Instance().DrawSprite(ResourceManager::Instance().GetTexture("background"), glm::vec2(0.f, 0.f), glm::vec2(this->Width, this->Height), 0.f);
+    PostProcessorModule->BeginRender();
+    {
+      SpriteRenderer::Instance().DrawSprite(ResourceManager::Instance().GetTexture("background"), glm::vec2(0.f, 0.f), glm::vec2(this->Width, this->Height), 0.f);
 
-    this->Levels[this->curr_level].Draw(SpriteRenderer::Instance());
+      this->Levels[this->curr_level].Draw(SpriteRenderer::Instance());
 
-    PaddleObj->Draw(SpriteRenderer::Instance());
-    ParticleSystem->Render();
-    BallObj->Draw(SpriteRenderer::Instance());
+      PaddleObj->Draw(SpriteRenderer::Instance());
+      ParticleSystem->Render();
+      BallObj->Draw(SpriteRenderer::Instance());
+    }
+    PostProcessorModule->EndRender();
+
+    PostProcessorModule->Render(glfwGetTime());
   }
 }
 
@@ -50,6 +58,15 @@ void Game::Update(GLfloat dt) {
     DoCollision();
     ParticleSystem->Update(dt, *BallObj);
   }
+
+  if (shakeTime_ > 0.f) {
+    shakeTime_ -= dt;
+    if (shakeTime_ < 0.f) {
+      shakeTime_ = 0.f;
+      PostProcessorModule->Shake = false;
+    }
+    
+  }
 }
 
 void Game::initShader(Camera &mainCamera, Path &projroot) {
@@ -65,9 +82,12 @@ void Game::initShader(Camera &mainCamera, Path &projroot) {
     shader.SetUniform("projection", mainCamera.GetProjectionMatrix_Ortho());
     shader.SetUniform("sprite", 1);
   }
+  {
+    auto &shader = ResourceManager::Instance().LoadShader("default_post_processing_shader", projroot / "src/shader/post_processing.vert", projroot / "src/shader/post_processing.frag");
+  }
 }
 
-void Game::initSprite(Path &projroot) {
+void Game::initSprite(Path &projroot, int framebuffer_width, int framebuffer_height) {
   SpriteRenderer::Instance().SetShader(ResourceManager::Instance().GetShader("default_sprite_shader"));
   ResourceManager::Instance().LoadTexture2D("face", projroot / "res/texture/awesomeface.png", true);
   ResourceManager::Instance().LoadTexture2D("background", projroot / "res/texture/background.jpg", false);
@@ -75,6 +95,7 @@ void Game::initSprite(Path &projroot) {
   ResourceManager::Instance().LoadTexture2D("block_solid", projroot / "res/texture/block_solid.png", true);
   ResourceManager::Instance().LoadTexture2D("paddle", projroot / "res/texture/paddle.png", true);
   ResourceManager::Instance().LoadTexture2D("particle", projroot / "res/texture/particle.png");
+  ResourceManager::Instance().LoadEmptyTextureBuffer("default_empty_texture_buffer", framebuffer_width, framebuffer_height);
 }
 void Game::initLevel(Path &projroot) {
   for (int i : std::ranges::views::iota(0, 4)) {
@@ -109,7 +130,15 @@ void Game::initParticleSystem() {
   auto &sprite = ResourceManager::Instance().GetTexture("particle");
   ParticleSystem = std::make_unique<ParticleGenertor>(initTotal, initNew, initOffset, shader, sprite);
 }
+
+void Game::initPostProcessor(int framebuffer_width, int framebuffer_height) {
+  auto &shader = ResourceManager::Instance().GetShader("default_post_processing_shader");
+  auto &texture = ResourceManager::Instance().GetTexture("default_empty_texture_buffer");
+
+  PostProcessorModule = std::make_unique<PostProcessor>((unsigned int)framebuffer_width, (unsigned int)framebuffer_height, shader, texture);
+}
 void Game::DoCollision() {
+
   for (auto &brick : Levels[curr_level].Bricks) {
     // TODO
     if (!brick.Destroyed) {
@@ -122,6 +151,9 @@ void Game::DoCollision() {
             ++this->curr_level;
             Reset();
           }
+        } else {
+          shakeTime_ = 0.15f;
+          PostProcessorModule->Shake = true;
         }
       }
       if (auto colliInfo = PaddleObj->CheckCollision(brick); std::get<0>(colliInfo)) {

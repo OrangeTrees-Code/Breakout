@@ -1,6 +1,7 @@
 #include "ParticleGenerator.hpp"
 #include "DynamicGOBase.hpp"
 #include "GameObject.hpp"
+#include "Primitive.hpp"
 #include "Shader.tpp"
 #include "Texture2D.hpp"
 #include <cstdlib>
@@ -10,23 +11,15 @@ void ParticleGenertor::init() {
   particles_.resize(TotalNum_Particles);
   unuesdIndex_.push_range(std::views::iota(0, 500) | std::views::reverse);
 
-  static GLfloat particle_quad[] = {
-      0.0f, 1.0f, 0.0f, 1.0f,
-      1.0f, 0.0f, 1.0f, 0.0f,
-      0.0f, 0.0f, 0.0f, 0.0f,
-
-      0.0f, 1.0f, 0.0f, 1.0f,
-      1.0f, 1.0f, 1.0f, 1.0f,
-      1.0f, 0.0f, 1.0f, 0.0f};
-
   unsigned int VBO;
   glGenVertexArrays(1, &this->vao_);
   glGenBuffers(1, &VBO);
   glBindVertexArray(this->vao_);
   glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(particle_quad), particle_quad, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(Quad::unitVertices), Quad::unitVertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
+  glBindBuffer(GL_ARRAY_BUFFER,0);
   glBindVertexArray(0);
 }
 

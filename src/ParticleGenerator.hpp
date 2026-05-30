@@ -9,6 +9,7 @@
 class ParticleGenertor {
 public:
   ParticleGenertor(int totalNum, int newNum, const glm::vec2 &offset, Shader &sdr, Texture2D &tex) : TotalNum_Particles(totalNum), NewNum_Particle(newNum), Offset(offset), shader(&sdr), sprite(&tex) { init(); }
+  ~ParticleGenertor() { glDeleteVertexArrays(1, &vao_); }
   void Update(float deltaTime, GameObject &object);
   void Render();
   Shader &GetShader() { return *shader; }
@@ -25,6 +26,7 @@ private:
   int getFirstUnuesdIndex();
   void respawnParticle(ParticleObject &particle, GameObject &object);
   void init();
+  void initVAO();
 
 private:
   std::vector<ParticleObject> particles_;
