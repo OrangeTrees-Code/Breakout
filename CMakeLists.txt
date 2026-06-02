@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 find_package(OpenGL REQUIRED)
+find_package(Freetype REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(GLFW REQUIRED glfw3)
@@ -40,6 +41,9 @@ add_executable(game
     src/PrefabsManager.cpp
     src/AudioSystem.cpp
     src/miniaudio.c
+    src/TextRenderer.cpp
+    src/Menu.cpp
+    src/EGameState.cpp
 )
 
 target_include_directories(game PRIVATE
@@ -52,6 +56,7 @@ target_include_directories(game PRIVATE
 target_link_libraries(game
     ${GLFW_LIBRARIES}
     OpenGL::GL
+    Freetype::Freetype
 )
 
 if(UNIX)

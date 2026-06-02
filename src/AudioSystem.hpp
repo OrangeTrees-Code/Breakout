@@ -10,6 +10,8 @@ class AudioSystem {
 public:
   static AudioSystem &Instance();
   static void Init(InitKey);
+  AudioSystem(const AudioSystem &) = delete;
+  AudioSystem &operator=(const AudioSystem &) = delete;
   ~AudioSystem();
   void ShutDown();
   void LoadSound(const std::string &name, const Path &path);

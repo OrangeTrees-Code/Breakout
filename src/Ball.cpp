@@ -35,7 +35,7 @@ void Ball::Move(float deltaTime, int width, int height) {
   }
 }
 
-void Ball::ManipulableHandle(std::array<bool, 1024> &Keys) {
+void Ball::ManipulableHandle(std::array<bool, 1024> &Keys, std::array<bool, 1024> &KeysProcessed) {
   if (Keys[GLFW_KEY_SPACE]) {
     this->IsStuck = false;
   }

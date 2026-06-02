@@ -9,6 +9,8 @@ class PrefabsManager {
 public:
   static PrefabsManager &Instance();
   static void Init(InitKey);
+  PrefabsManager(const PrefabsManager &other) = delete;
+  PrefabsManager &operator=(const PrefabsManager &other) = delete;
   void SaveAsPrefab(const std::string &name, const GameObject &gameObject);
   std::unique_ptr<GameObject> Instantiate(const std::string &name);
   std::unique_ptr<GameObject> Instantiate(const std::string &name, const glm::vec2 &position);

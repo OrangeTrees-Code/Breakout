@@ -24,7 +24,7 @@ void ParticleGenerator::Init(InitKey, int totalNum, int newNum, const glm::vec2 
 
 void ParticleGenerator::init() {
   particles_.resize(TotalNum_Particles);
-  unuesdIndex_.push_range(std::views::iota(0, 500) | std::views::reverse);
+  unuesdIndex_.push_range(std::views::iota(0, TotalNum_Particles) | std::views::reverse);
 
   unsigned int VBO;
   glGenVertexArrays(1, &this->vao_);

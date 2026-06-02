@@ -22,7 +22,7 @@ void Paddle::Move(float deltaTime, int width, int height) {
   }
 }
 
-void Paddle::ManipulableHandle(std::array<bool, 1024> &Keys) {
+void Paddle::ManipulableHandle(std::array<bool, 1024> &Keys,std::array<bool, 1024> &KeysProcessed) {
   this->Velocity = glm::vec2(0.f);
   if (Keys[GLFW_KEY_A]) {
     this->Velocity.x = -500.f;

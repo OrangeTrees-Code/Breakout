@@ -18,6 +18,8 @@ public:
   static PostProcessor &Instance();
 
   static void Init(InitKey, unsigned int width, unsigned int height, Shader &sdr, Texture2D &textureBuffer);
+  PostProcessor(const PostProcessor &other) = delete;
+  PostProcessor &operator=(const PostProcessor &) = delete;
 
   ~PostProcessor();
   Shader &GetShader() { return *shader_; }

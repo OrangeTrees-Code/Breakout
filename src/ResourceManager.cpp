@@ -1,6 +1,7 @@
 #include "ResourceManager.hpp"
 #include "Shader.tpp"
-
+#include <ft2build.h>
+#include FT_FREETYPE_H
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <fstream>
@@ -8,7 +9,17 @@
 #include <stdexcept>
 #include <utility>
 
-ResourceManager ResourceManager::instance_;
+std::unique_ptr<ResourceManager> ResourceManager::instance_ = nullptr;
+
+ResourceManager &ResourceManager::Instance() {
+  if (!instance_) {
+    throw std::runtime_error("ResourceManager has not been initialized");
+  }
+  return *instance_;
+}
+void ResourceManager::Init(InitKey) {
+  instance_ = std::unique_ptr<ResourceManager>(new ResourceManager());
+}
 
 namespace {
 std::string ReadTextFile(const std::filesystem::path &path) {
@@ -27,6 +38,56 @@ std::string ReadTextFile(const std::filesystem::path &path) {
 }
 } // namespace
 
+void ResourceManager::LoadFonts(const Path &path, unsigned int fontSize) {
+  // Then initialize and load the FreeType library
+  FT_Library ft;
+  if (FT_Init_FreeType(&ft)) // All functions return a value different than 0 whenever an error occurred
+    throw std::runtime_error("ERROR::FREETYPE: Could not init FreeType Library");
+  FT_Face face;
+  if (FT_New_Face(ft, path.c_str(), 0, &face))
+    throw std::runtime_error("ERROR::FREETYPE: Failed to load font");
+  // Set size to load glyphs as
+  FT_Set_Pixel_Sizes(face, 0, fontSize);
+  // Disable byte-alignment restriction
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  // Then for the first 128 ASCII characters, pre-load/compile their characters and store them
+  std::string name;
+  fonts_[path.stem().string()] = Font();
+  for (GLubyte c = 0; c < 128; c++) // lol see what I did there
+  {
+    // Load character glyph
+    if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+      throw std::runtime_error("ERROR::FREETYTPE: Failed to load Glyph");
+      continue;
+    }
+
+    Texture2D texture;
+    texture.Image_format = GL_RED;
+    texture.Internal_format = GL_RED;
+
+    texture.generate(face->glyph->bitmap.width, face->glyph->bitmap.rows, face->glyph->bitmap.buffer);
+    texture.Wrap_s = GL_CLAMP_TO_EDGE;
+    texture.Wrap_s = GL_CLAMP_TO_EDGE;
+    texture.Filter_min = GL_LINEAR;
+    texture.Filter_max = GL_LINEAR;
+
+    name.clear();
+    name = path.stem().string() + "_" + std::to_string(c);
+
+    auto [it, _] = textures_2d_.emplace(name, std::move(texture));
+
+    Font::Character character{
+        &(it->second),
+        glm::ivec2(face->glyph->bitmap.width, face->glyph->bitmap.rows),
+        glm::ivec2(face->glyph->bitmap_left, face->glyph->bitmap_top),
+        face->glyph->advance.x};
+
+    fonts_[path.stem().string()].Characters[c] = character;
+  }
+  // Destroy FreeType once we're finished
+  FT_Done_Face(face);
+  FT_Done_FreeType(ft);
+}
 void ResourceManager::Clear() {
   shaders_.clear();
   textures_2d_.clear();
@@ -45,7 +106,12 @@ Texture2D &ResourceManager::GetTexture(const std::string &name) {
   }
   return textures_2d_.at(name);
 }
-
+Font &ResourceManager::GetFont(const std::string name) {
+  if (!fonts_.contains(name)) {
+    throw std::runtime_error("ERROR::RESOURCEMANAGER::GetFont: " + name + " doesn't exist!");
+  }
+  return fonts_.at(name);
+}
 unsigned int ResourceManager::initVertexShader(const char *vertexShaderSource) {
   unsigned int vertexShader;
   vertexShader = glCreateShader(GL_VERTEX_SHADER);

@@ -7,6 +7,7 @@
 #include "PrefabsManager.hpp"
 #include "ResourceManager.hpp"
 #include "SpriteRenderer.hpp"
+#include "TextRenderer.hpp"
 #include <GLFW/glfw3.h>
 #include <algorithm>
 #include <memory>
@@ -14,6 +15,8 @@
 #include <string>
 
 void Game::Init(Camera &mainCamera, int framebuffer_width, int framebuffer_height) {
+  initResourceManager();
+
   auto &projroot = ResourceManager::Instance().ProjRoot;
 
   initShader(mainCamera, projroot);
@@ -36,44 +39,11 @@ void Game::Init(Camera &mainCamera, int framebuffer_width, int framebuffer_heigh
 
   initAudioSystem(projroot);
 
+  initTextRenderer(projroot);
+
   AudioSystem::Instance().Play("BGM", true);
-}
 
-void Game::Render() {
-  if (this->State == GameState::GAME_ACTIVE) {
-    PostProcessor::Instance().BeginRender();
-    {
-      SpriteRenderer::Instance().DrawSprite(ResourceManager::Instance().GetTexture("background"), glm::vec2(0.f, 0.f), glm::vec2(this->Width, this->Height), 0.f);
-
-      this->Levels[this->curr_level].Draw(SpriteRenderer::Instance());
-
-      PaddleObj->Draw(SpriteRenderer::Instance());
-      ParticleGenerator::Instance().Render();
-      BallObj->Draw(SpriteRenderer::Instance());
-      PowerUpSystem.Draw(SpriteRenderer::Instance());
-    }
-    PostProcessor::Instance().EndRender();
-
-    PostProcessor::Instance().Render(glfwGetTime());
-  }
-}
-
-void Game::ProcessInput() {
-  if (this->State == GameState::GAME_ACTIVE) {
-    PaddleObj->ManipulableHandle(Keys);
-    BallObj->ManipulableHandle(Keys);
-  }
-}
-
-void Game::Update(GLfloat dt) {
-  if (this->State == GameState::GAME_ACTIVE) {
-    this->PaddleObj->Move(dt, this->Width, this->Height);
-    this->BallObj->Move(dt, this->Width, this->Height);
-    DoCollision();
-    ParticleGenerator::Instance().Update(dt, *BallObj);
-    PostProcessor::Instance().Update(dt);
-    PowerUpSystem.Update(dt, this->Width, this->Height);
-  }
+  initMenu();
 }
 
 void Game::initShader(Camera &mainCamera, Path &projroot) {
@@ -92,8 +62,17 @@ void Game::initShader(Camera &mainCamera, Path &projroot) {
   {
     auto &shader = ResourceManager::Instance().LoadShader("default_post_processing_shader", projroot / "src/shader/post_processing.vert", projroot / "src/shader/post_processing.frag");
   }
+  {
+    auto &shader = ResourceManager::Instance().LoadShader("default_text_shader", projroot / "src/shader/text.vert", projroot / "src/shader/text.frag");
+    shader.Use();
+    // Load and configure shader
+    shader.SetUniform("projection", glm::ortho(0.0f, static_cast<GLfloat>(this->Width), static_cast<GLfloat>(this->Height), 0.0f), GL_TRUE);
+    shader.SetUniform("text", 3);
+  }
 }
-
+void Game::initResourceManager() {
+  ResourceManager::Init(InitKey());
+}
 void Game::initSprite(Path &projroot, int framebuffer_width, int framebuffer_height) {
   SpriteRenderer::Init(InitKey(), ResourceManager::Instance().GetShader("default_sprite_shader"));
   ResourceManager::Instance().LoadTexture2D("face", projroot / "res/texture/awesomeface.png", true);
@@ -223,8 +202,74 @@ void Game::initAudioSystem(Path &projroot) {
   AudioSystem::Instance().LoadSound("powerup", projroot / "res/sounds/powerup.wav");
   AudioSystem::Instance().LoadSound("bleepOnPaddle", projroot / "res/sounds/bleep.wav");
 }
-void Game::DoCollision() {
 
+void Game::initTextRenderer(Path &projroot) {
+  ResourceManager::Instance().LoadFonts(projroot / "res/fonts/ANDYB.TTF", 24u);
+  auto &shader = ResourceManager::Instance().GetShader("default_text_shader");
+  TextRenderer::Init(InitKey(), this->Width, this->Height, shader);
+  TextRenderer::Instance().SetFont(ResourceManager::Instance().GetFont("ANDYB"));
+}
+
+void Game::initMenu() {
+  auto GetGameState = [this]() -> std::tuple<GameState &, std::vector<GameLevel> &, int &> { return {this->State, this->Levels, this->curr_level}; };
+  MenuPannel.Init(InitKey(), GetGameState);
+}
+
+void Game::Render() {
+  if (State == GameState::GAME_ACTIVE || State == GameState::GAME_MENU || State == GameState::GAME_WIN) {
+    PostProcessor::Instance().BeginRender();
+    {
+      SpriteRenderer::Instance().DrawSprite(ResourceManager::Instance().GetTexture("background"), glm::vec2(0.f, 0.f), glm::vec2(this->Width, this->Height), 0.f);
+
+      this->Levels[this->curr_level].Draw(SpriteRenderer::Instance());
+
+      PaddleObj->Draw(SpriteRenderer::Instance());
+      ParticleGenerator::Instance().Render();
+      BallObj->Draw(SpriteRenderer::Instance());
+      PowerUpSystem.Draw(SpriteRenderer::Instance());
+      TextRenderer::Instance().RenderText("Lives:" + std::to_string(Lives), 5.0f, 5.0f, 1.0f);
+    }
+    PostProcessor::Instance().EndRender();
+
+    PostProcessor::Instance().Render(glfwGetTime());
+  }
+  if (State == GameState::GAME_MENU) {
+    MenuPannel.Render(Width, Height, curr_level, State);
+  }
+  if (State == GameState::GAME_WIN) {
+    MenuPannel.Render(Width, Height, curr_level, State);
+  }
+}
+
+void Game::ProcessInput() {
+  switch (State) {
+  case GameState::GAME_ACTIVE: {
+    PaddleObj->ManipulableHandle(Keys, KeysProcessed);
+    BallObj->ManipulableHandle(Keys, KeysProcessed);
+    break;
+  }
+  case GameState::GAME_MENU: {
+    MenuPannel.ManipulableHandle(Keys, KeysProcessed);
+    break;
+  }
+  case GameState::GAME_WIN:
+    MenuPannel.ManipulableHandle(Keys, KeysProcessed);
+    break;
+  }
+}
+
+void Game::Update(GLfloat dt) {
+  if (this->State == GameState::GAME_ACTIVE) {
+    this->PaddleObj->Move(dt, this->Width, this->Height);
+    this->BallObj->Move(dt, this->Width, this->Height);
+    DoCollision();
+    ParticleGenerator::Instance().Update(dt, *BallObj);
+    PostProcessor::Instance().Update(dt);
+    PowerUpSystem.Update(dt, this->Width, this->Height);
+  }
+}
+
+void Game::DoCollision() {
   for (auto &brick : Levels[curr_level].Bricks) {
     if (!brick.Destroyed) {
       if (BallObj->IsPassThrough == false) {
@@ -235,8 +280,13 @@ void Game::DoCollision() {
             AudioSystem::Instance().Play("bleepOnBrick");
             this->Levels[this->curr_level].DestroyableCount--;
             if (this->Levels[curr_level].IsCompleted()) {
-              ++this->curr_level;
+              this->curr_level = (this->curr_level + 1) % Levels.size();
               Reset();
+              ConqueredCount++;
+              if (ConqueredCount == Levels.size()) {
+                State = GameState::GAME_WIN;
+                PostProcessor::Instance().StartEffect(E_EffectType::Chaos, std::numeric_limits<float>::max());
+              }
             }
             spawnPowerUps(brick);
           } else {
@@ -268,7 +318,9 @@ void Game::DoCollision() {
   }
 }
 void Game::Reset() {
-  std::for_each(Levels.begin(), Levels.end(), [](GameLevel &lv) { lv.Reset(); });
+  if (Lives <= 0) {
+    std::for_each(Levels.begin(), Levels.end(), [](GameLevel &lv) { lv.Reset(); });
+  }
   PaddleObj->Reset(this->Width, this->Height);
   BallObj->Reset(*PaddleObj);
   PostProcessor::Instance().EndEffect(E_EffectType::All);
@@ -288,5 +340,11 @@ void Game::spawnPowerUps(GameObject &block) {
 }
 
 void Game::Fail() {
+  --Lives;
   Reset();
+  if (Lives <= 0) {
+    Lives = 3;
+    this->curr_level = 0;
+    this->State = GameState::GAME_MENU;
+  }
 }
