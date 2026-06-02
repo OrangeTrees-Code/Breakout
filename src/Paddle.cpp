@@ -1,5 +1,6 @@
 #include "Paddle.hpp"
 #include "DynamicGOBase.hpp"
+#include "PowerUp.hpp"
 #include <cmath>
 void Paddle::Move(float deltaTime, int width, int height) {
   if (this->Velocity != glm::vec2(0.f, 0.f)) {
@@ -35,10 +36,17 @@ void Paddle::ManipulableHandle(std::array<bool, 1024> &Keys) {
   if (Keys[GLFW_KEY_S]) {
     this->Velocity.y = 500.f;
   }
+  if (Keys[GLFW_KEY_SPACE]) {
+    if (this->IsSticky) {
+      this->IsSticky = false;
+    }
+  }
 }
 
 void Paddle::Reset(int width, int height) {
   this->Position = glm::vec2((float)width / 2 - Size.x / 2, height - Size.y);
+  this->Size = glm::vec2(100.f, 20.f);
+  this->IsSticky = false;
 }
 
 ICollision::CollisionInfo_Type Paddle::CheckCollision(const GameObject &other) {
@@ -67,26 +75,39 @@ ICollision::CollisionInfo_Type Paddle::CheckCollision(const GameObject &other) {
 
   return {true, mask};
 }
-void Paddle::OnCollision(const GameObject &other, CollisionInfo_Type &collisionInfo) {
-  auto colliType = std::get<1>(collisionInfo);
-  if (colliType & (BoundMaskType)E_CrossBound::Left) {
-    this->Position.x = other.Position.x - this->Size.x;
-    this->Velocity.x *= -1;
-  } else if (colliType & (BoundMaskType)E_CrossBound::Right) {
-    this->Position.x = other.Position.x + other.Size.x;
-    this->Velocity.x *= -1;
+void Paddle::OnCollision(GameObject &other, CollisionInfo_Type &collisionInfo) {
+  switch (other.ObjType) {
+  case E_ObjectType::Brick: {
+    auto colliType = std::get<1>(collisionInfo);
+    if (colliType & (BoundMaskType)E_CrossBound::Left) {
+      this->Position.x = other.Position.x - this->Size.x;
+      this->Velocity.x *= -1;
+    } else if (colliType & (BoundMaskType)E_CrossBound::Right) {
+      this->Position.x = other.Position.x + other.Size.x;
+      this->Velocity.x *= -1;
+    }
+    if (colliType & (BoundMaskType)E_CrossBound::Up) {
+      this->Position.y = other.Position.y - this->Size.y;
+      this->Velocity.y *= -1;
+    } else if (colliType & (BoundMaskType)E_CrossBound::Down) {
+      this->Position.y = other.Position.y + other.Size.y;
+      this->Velocity.y *= -1;
+    }
+    break;
   }
-  if (colliType & (BoundMaskType)E_CrossBound::Up) {
-    this->Position.y = other.Position.y - this->Size.y;
-    this->Velocity.y *= -1;
-  } else if (colliType & (BoundMaskType)E_CrossBound::Down) {
-    this->Position.y = other.Position.y + other.Size.y;
-    this->Velocity.y *= -1;
+  case E_ObjectType::PowerUp: {
+    dynamic_cast<PowerUp &>(other).Active();
+    break;
+  }
+  default:
+    break;
   }
 }
 
-//   // bool collisionX = this->Position.x + this->Size.x >= other.Position.x &&
-//   //                   other.Position.x + other.Size.x >= this->Position.x;
-//   // bool collisionY = this->Position.y + this->Size.y >= other.Position.y &&
-//   //                   other.Position.y + other.Size.y >= this->Position.y;
-//   // return collisionX && collisionY;
+void Paddle::Draw(SpriteRenderer &renderer) {
+  if (IsSticky) {
+    renderer.DrawSprite(*(this->Sprite), this->Position, this->Size, this->Rotation, this->EffectColor);
+  } else {
+    renderer.DrawSprite(*(this->Sprite), this->Position, this->Size, this->Rotation, this->Color);
+  }
+}

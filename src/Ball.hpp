@@ -1,16 +1,18 @@
 #pragma once
 
 #include "DynamicGOBase.hpp"
+#include "Event.hpp"
 #include "GameObject.hpp"
 #include "ICollision.ipp"
 #include "Paddle.hpp"
-#include "Event.hpp"
 class Ball : public DynamicGOBase, public IManipulable, public ICollision {
 
 public:
   float Radius;
   bool IsStuck;
   Event<> OnOutOfBound;
+  bool IsPassThrough = false;
+  glm::vec3 EffectColor;
 
 public:
   Ball() : DynamicGOBase(E_ObjectType::Ball) {};
@@ -18,15 +20,22 @@ public:
 
   void Move(float deltaTime, int width, int height) override;
   void ManipulableHandle(std::array<bool, 1024> &Keys) override;
-  void SetLaunchPaddle(Paddle &paddle) { launchPaddle_ = &paddle; }
+  void SetLaunchPaddle(Paddle &paddle,bool isSyncOffset = false);
 
   CollisionInfo_Type CheckCollision(const GameObject &other) override;
-  void OnCollision(const GameObject &other, CollisionInfo_Type &collisionInfo) override;
-  void Reset(const Paddle& paddle);
+  void OnCollision(GameObject &other, CollisionInfo_Type &collisionInfo) override;
+  void Reset(const Paddle &paddle);
 
 private:
   Paddle *launchPaddle_ = nullptr;
+  glm::vec2 offsetToPaddle;
 
 private:
-  void handleColliWithPaddle(const GameObject &other, bool isUp);
+  void resetOffsetWithPaddle_();
+  void handleColliWithObjectX(const GameObject &other, BoundMaskType colliType);
+  void handleColliWithObjectY(const GameObject &other, BoundMaskType colliType);
+  void handleColliWithObject(const GameObject &other, BoundMaskType colliType);
+  void handleColliWithPaddle(const GameObject &other, BoundMaskType colliType);
+  void handleColliWithPaddleY(const GameObject &other, bool isUp);
+  bool shouldUpdateOffset_ = false;
 };

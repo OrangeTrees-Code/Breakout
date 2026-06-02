@@ -14,6 +14,9 @@ public:
 public:
   static ResourceManager &Instance() { return instance_; }
 
+  ResourceManager(const ResourceManager &other) = delete;
+  ResourceManager &operator=(const ResourceManager &other) = delete;
+
   Shader &LoadShader(const std::string &name, const Path &vertPath, const Path &fragPath);
   Shader &LoadShader(const std::string &name, const Path &vertPath, const Path &fragPath, const Path &geomPath);
   Shader &GetShader(const std::string &name);

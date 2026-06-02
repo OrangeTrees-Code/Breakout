@@ -4,6 +4,17 @@
 #include <glad/glad.h>
 #include <stdexcept>
 
+std::unique_ptr<PostProcessor> PostProcessor::instance_ = nullptr;
+
+PostProcessor &PostProcessor::Instance() {
+  if (!instance_) {
+    throw std::runtime_error("PostProcessor has not been initialized");
+  }
+  return *instance_;
+}
+void PostProcessor::Init(InitKey, unsigned int width, unsigned int height, Shader &sdr, Texture2D &textureBuffer) {
+  instance_ = std::unique_ptr<PostProcessor>(new PostProcessor(width, height, sdr, textureBuffer));
+}
 PostProcessor::~PostProcessor() {
   glDeleteVertexArrays(1, &vao_);
   glDeleteRenderbuffers(1, &rbo_);
@@ -97,4 +108,58 @@ void PostProcessor::Render(float time) {
   glBindVertexArray(vao_);
   glDrawArrays(GL_TRIANGLES, 0, 6);
   glBindVertexArray(0);
+}
+
+void PostProcessor::Update(float deltaTime) {
+  if (shakeTime_ > 0.f) {
+    shakeTime_ -= deltaTime;
+    if (shakeTime_ < 0.f) {
+      shakeTime_ = 0.f;
+      Shake = false;
+    }
+  }
+  if (chaosTime_ > 0.f) {
+    chaosTime_ -= deltaTime;
+    if (chaosTime_ < 0.f) {
+      chaosTime_ = 0.f;
+      Chaos = false;
+    }
+  }
+  if (confuseTime_ > 0.f) {
+    confuseTime_ -= deltaTime;
+    if (confuseTime_ < 0.f) {
+      confuseTime_ = 0.f;
+      Confuse = false;
+    }
+  }
+}
+
+void PostProcessor::StartEffect(E_EffectType type, float time) {
+  if ((EffectMaskType)type & (EffectMaskType(E_EffectType::Chaos))) {
+    Chaos = true;
+    chaosTime_ = time;
+  }
+  if ((EffectMaskType)type & (EffectMaskType(E_EffectType::Confuse))) {
+    Confuse = true;
+    confuseTime_ = time;
+  }
+  if ((EffectMaskType)type & (EffectMaskType(E_EffectType::Shake))) {
+    Shake = true;
+    shakeTime_ = time;
+  }
+}
+
+void PostProcessor::EndEffect(E_EffectType type) {
+  if ((EffectMaskType)type & (EffectMaskType(E_EffectType::Chaos))) {
+    Chaos = false;
+    chaosTime_ = 0.f;
+  }
+  if ((EffectMaskType)type & (EffectMaskType(E_EffectType::Confuse))) {
+    Confuse = false;
+    confuseTime_ = 0.f;
+  }
+  if ((EffectMaskType)type & (EffectMaskType(E_EffectType::Shake))) {
+    Shake = false;
+    shakeTime_ = 0.f;
+  }
 }

@@ -34,6 +34,10 @@ add_executable(game
     src/ParticleGenerator.cpp
     src/PostProcessor.cpp
     src/Primitive.cpp
+    src/PowerUp.cpp
+    src/PowerUpModule.cpp
+    src/InitKey.hpp
+    src/PrefabsManager.cpp
 )
 
 target_include_directories(game PRIVATE

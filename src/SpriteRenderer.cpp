@@ -4,14 +4,20 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/trigonometric.hpp>
 
-SpriteRenderer SpriteRenderer::instance_;
+std::unique_ptr<SpriteRenderer> SpriteRenderer::instance_ = nullptr;
 
+SpriteRenderer &SpriteRenderer::Instance() {
+  if (!instance_) {
+    throw std::runtime_error("SpriteRenderer has not been initialized");
+  }
+  return *instance_;
+}
+
+void SpriteRenderer::Init(InitKey, Shader &shader_ptr) {
+  instance_ = std::unique_ptr<SpriteRenderer>(new SpriteRenderer(shader_ptr));
+}
 void SpriteRenderer::SetShader(Shader &shader) {
   shader_ptr_ = &shader;
-  if (!initialized_) {
-    initRenderData();
-    initialized_ = true;
-  }
 }
 
 void SpriteRenderer::initRenderData() {

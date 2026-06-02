@@ -1,9 +1,13 @@
 #include "Game.hpp"
 #include "Camera.hpp"
 #include "Paddle.hpp"
+#include "ParticleGenerator.hpp"
+#include "PostProcessor.hpp"
+#include "PrefabsManager.hpp"
 #include "ResourceManager.hpp"
 #include "SpriteRenderer.hpp"
 #include <GLFW/glfw3.h>
+#include <algorithm>
 #include <memory>
 #include <ranges>
 #include <string>
@@ -24,23 +28,28 @@ void Game::Init(Camera &mainCamera, int framebuffer_width, int framebuffer_heigh
   initParticleSystem();
 
   initPostProcessor(framebuffer_width, framebuffer_height);
+
+  initPrefabsManager();
+
+  initPowerUpSystem();
 }
 
 void Game::Render() {
   if (this->State == GameState::GAME_ACTIVE) {
-    PostProcessorModule->BeginRender();
+    PostProcessor::Instance().BeginRender();
     {
       SpriteRenderer::Instance().DrawSprite(ResourceManager::Instance().GetTexture("background"), glm::vec2(0.f, 0.f), glm::vec2(this->Width, this->Height), 0.f);
 
       this->Levels[this->curr_level].Draw(SpriteRenderer::Instance());
 
       PaddleObj->Draw(SpriteRenderer::Instance());
-      ParticleSystem->Render();
+      ParticleGenerator::Instance().Render();
       BallObj->Draw(SpriteRenderer::Instance());
+      PowerUpSystem.Draw(SpriteRenderer::Instance());
     }
-    PostProcessorModule->EndRender();
+    PostProcessor::Instance().EndRender();
 
-    PostProcessorModule->Render(glfwGetTime());
+    PostProcessor::Instance().Render(glfwGetTime());
   }
 }
 
@@ -56,16 +65,9 @@ void Game::Update(GLfloat dt) {
     this->PaddleObj->Move(dt, this->Width, this->Height);
     this->BallObj->Move(dt, this->Width, this->Height);
     DoCollision();
-    ParticleSystem->Update(dt, *BallObj);
-  }
-
-  if (shakeTime_ > 0.f) {
-    shakeTime_ -= dt;
-    if (shakeTime_ < 0.f) {
-      shakeTime_ = 0.f;
-      PostProcessorModule->Shake = false;
-    }
-    
+    ParticleGenerator::Instance().Update(dt, *BallObj);
+    PostProcessor::Instance().Update(dt);
+    PowerUpSystem.Update(dt, this->Width, this->Height);
   }
 }
 
@@ -88,13 +90,20 @@ void Game::initShader(Camera &mainCamera, Path &projroot) {
 }
 
 void Game::initSprite(Path &projroot, int framebuffer_width, int framebuffer_height) {
-  SpriteRenderer::Instance().SetShader(ResourceManager::Instance().GetShader("default_sprite_shader"));
+  SpriteRenderer::Init(InitKey(), ResourceManager::Instance().GetShader("default_sprite_shader"));
   ResourceManager::Instance().LoadTexture2D("face", projroot / "res/texture/awesomeface.png", true);
   ResourceManager::Instance().LoadTexture2D("background", projroot / "res/texture/background.jpg", false);
   ResourceManager::Instance().LoadTexture2D("block", projroot / "res/texture/block.png", false);
   ResourceManager::Instance().LoadTexture2D("block_solid", projroot / "res/texture/block_solid.png", true);
   ResourceManager::Instance().LoadTexture2D("paddle", projroot / "res/texture/paddle.png", true);
   ResourceManager::Instance().LoadTexture2D("particle", projroot / "res/texture/particle.png");
+  ResourceManager::Instance().LoadTexture2D("speed", projroot / "res/texture/PowerUps/powerup_speed.png", true);
+  ResourceManager::Instance().LoadTexture2D("confuse", projroot / "res/texture/PowerUps/powerup_confuse.png", true);
+  ResourceManager::Instance().LoadTexture2D("passthrough", projroot / "res/texture/PowerUps/powerup_passthrough.png", true);
+  ResourceManager::Instance().LoadTexture2D("sticky", projroot / "res/texture/PowerUps/powerup_sticky.png", true);
+  ResourceManager::Instance().LoadTexture2D("increase", projroot / "res/texture/PowerUps/powerup_increase.png", true);
+  ResourceManager::Instance().LoadTexture2D("chaos", projroot / "res/texture/PowerUps/powerup_chaos.png", true);
+
   ResourceManager::Instance().LoadEmptyTextureBuffer("default_empty_texture_buffer", framebuffer_width, framebuffer_height);
 }
 void Game::initLevel(Path &projroot) {
@@ -109,6 +118,8 @@ void Game::initPaddle() {
   const glm::vec2 initPos((float)this->Width / 2 - initSize.x / 2, (float)this->Height - initSize.y);
   auto &paddleTex = ResourceManager::Instance().GetTexture("paddle");
   PaddleObj = std::make_unique<Paddle>(initPos, initSize, paddleTex);
+  PaddleObj->EffectColor = glm::vec3(1.0f, 0.5f, 1.0f);
+  PaddleObj->MaxLength = this->Width;
 }
 void Game::initBall() {
   const glm::vec2 initVelocity(100.0f, -350.0f);
@@ -117,43 +128,105 @@ void Game::initBall() {
   const glm::vec2 initSize(initRadius * 2.f);
   const glm::vec2 initPos = PaddleObj->Position + glm::vec2(PaddleObj->Size.x / 2.f - initRadius, -initRadius * 2.f - 0.01f);
   BallObj = std::make_unique<Ball>(initRadius, true, initPos, initSize, faceTex, glm::vec3(1.f), initVelocity);
-  BallObj->SetLaunchPaddle(*(this->PaddleObj));
+  BallObj->SetLaunchPaddle(*(this->PaddleObj), true);
   auto GameFail = [this]() { this->Fail(); };
   BallObj->OnOutOfBound.Subscribe(GameFail);
+  BallObj->EffectColor = glm::vec3(1.0f, 0.5f, 0.5f);
 }
 
 void Game::initParticleSystem() {
   const int initTotal = 500;
   const int initNew = 2;
-  const glm::vec2 initOffset(BallObj->Radius / 4);
+  const glm::vec2 initOffset(BallObj->Radius / 2);
   auto &shader = ResourceManager::Instance().GetShader("default_particle_shader");
   auto &sprite = ResourceManager::Instance().GetTexture("particle");
-  ParticleSystem = std::make_unique<ParticleGenertor>(initTotal, initNew, initOffset, shader, sprite);
+  ParticleGenerator::Init(InitKey(), initTotal, initNew, initOffset, shader, sprite);
 }
 
 void Game::initPostProcessor(int framebuffer_width, int framebuffer_height) {
   auto &shader = ResourceManager::Instance().GetShader("default_post_processing_shader");
   auto &texture = ResourceManager::Instance().GetTexture("default_empty_texture_buffer");
 
-  PostProcessorModule = std::make_unique<PostProcessor>((unsigned int)framebuffer_width, (unsigned int)framebuffer_height, shader, texture);
+  PostProcessor::Init(InitKey(), framebuffer_width, framebuffer_height, shader, texture);
+}
+
+void Game::initPrefabsManager() {
+  PrefabsManager::Init(InitKey());
+  glm::vec2 initVelocity(0.0f, 150.0f);
+  glm::vec2 initSize(60, 20);
+  auto GetBall = [this]() -> Ball & { return *(this->BallObj); };
+  auto GetPaddle = [this]() -> Paddle & { return *(this->PaddleObj); };
+  {
+    auto &tex = ResourceManager::Instance().GetTexture("speed");
+    PowerUp PowUP(E_PowerUpType::Speed, 0.f, initSize, tex, glm::vec3(0.5f, 0.5f, 1.0f), initVelocity);
+    PowUP.Init(InitKey(), GetBall, GetPaddle);
+
+    PrefabsManager::Instance().SaveAsPrefab("PowerUp_Speed", PowUP);
+  }
+  {
+    auto &tex = ResourceManager::Instance().GetTexture("sticky");
+    PowerUp PowUP(E_PowerUpType::Sticky, 20.f, initSize, tex, glm::vec3(1.0f, 0.5f, 1.0f), initVelocity);
+    PowUP.Init(InitKey(), GetBall, GetPaddle);
+
+    PrefabsManager::Instance().SaveAsPrefab("PowerUp_Sticky", PowUP);
+  }
+  {
+    auto &tex = ResourceManager::Instance().GetTexture("passthrough");
+    PowerUp PowUP(E_PowerUpType::PassThrough, 10.f, initSize, tex, glm::vec3(0.5f, 1.0f, 0.5f), initVelocity);
+    PowUP.Init(InitKey(), GetBall, GetPaddle);
+
+    PrefabsManager::Instance().SaveAsPrefab("PowerUp_PassThrough", PowUP);
+  }
+  {
+    auto &tex = ResourceManager::Instance().GetTexture("increase");
+    PowerUp PowUP(E_PowerUpType::PadSizeIncrease, 0.f, initSize, tex, glm::vec3(1.0f, 0.6f, 0.4), initVelocity);
+    PowUP.Init(InitKey(), GetBall, GetPaddle);
+
+    PrefabsManager::Instance().SaveAsPrefab("PowerUp_Increase", PowUP);
+  }
+  {
+    auto &tex = ResourceManager::Instance().GetTexture("confuse");
+    PowerUp PowUP(E_PowerUpType::Confuse, 15.f, initSize, tex, glm::vec3(1.0f, 0.3f, 0.3f), initVelocity);
+    PowUP.Init(InitKey(), GetBall, GetPaddle);
+
+    PrefabsManager::Instance().SaveAsPrefab("PowerUp_Confuse", PowUP);
+  }
+  {
+    auto &tex = ResourceManager::Instance().GetTexture("chaos");
+    PowerUp PowUP(E_PowerUpType::Chaos, 15.f, initSize, tex, glm::vec3(0.9f, 0.25f, 0.25f), initVelocity);
+    PowUP.Init(InitKey(), GetBall, GetPaddle);
+
+    PrefabsManager::Instance().SaveAsPrefab("PowerUp_Chaos", PowUP);
+  }
+}
+
+void Game::initPowerUpSystem() {
+  PowerUpSystem.TotalPowUp = 6;
+  PowerUpSystem.Weights["PowerUp_Speed"] = 1.f / PowerUpSystem.TotalPowUp;
+  PowerUpSystem.Weights["PowerUp_Sticky"] = 1.f / PowerUpSystem.TotalPowUp;
+  PowerUpSystem.Weights["PowerUp_PassThrough"] = 1.f / PowerUpSystem.TotalPowUp;
+  PowerUpSystem.Weights["PowerUp_Increase"] = 1.f / PowerUpSystem.TotalPowUp;
+  PowerUpSystem.Weights["PowerUp_Confuse"] = 1.f / PowerUpSystem.TotalPowUp;
+  PowerUpSystem.Weights["PowerUp_Chaos"] = 1.f / PowerUpSystem.TotalPowUp;
 }
 void Game::DoCollision() {
 
   for (auto &brick : Levels[curr_level].Bricks) {
-    // TODO
     if (!brick.Destroyed) {
-      if (auto colliInfo = BallObj->CheckCollision(brick); std::get<0>(colliInfo)) {
-        brick.OnCollision(*BallObj, colliInfo);
-        BallObj->OnCollision(brick, colliInfo);
-        if (brick.IsSolid == false) {
-          this->Levels[this->curr_level].DestroyableCount--;
-          if (this->Levels[curr_level].IsCompleted()) {
-            ++this->curr_level;
-            Reset();
+      if (BallObj->IsPassThrough == false) {
+        if (auto colliInfo = BallObj->CheckCollision(brick); std::get<0>(colliInfo)) {
+          brick.OnCollision(*BallObj, colliInfo);
+          BallObj->OnCollision(brick, colliInfo);
+          if (brick.IsSolid == false) {
+            this->Levels[this->curr_level].DestroyableCount--;
+            if (this->Levels[curr_level].IsCompleted()) {
+              ++this->curr_level;
+              Reset();
+            }
+            spawnPowerUps(brick);
+          } else {
+            PostProcessor::Instance().StartEffect(E_EffectType::Shake, 0.15f);
           }
-        } else {
-          shakeTime_ = 0.15f;
-          PostProcessorModule->Shake = true;
         }
       }
       if (auto colliInfo = PaddleObj->CheckCollision(brick); std::get<0>(colliInfo)) {
@@ -164,13 +237,33 @@ void Game::DoCollision() {
   if (auto colliInfo = BallObj->CheckCollision(*PaddleObj); std::get<0>(colliInfo)) {
     BallObj->OnCollision(*PaddleObj, colliInfo);
   }
+  for (auto &powerUp : PowerUpSystem.PowerUps) {
+    if (!powerUp.Destroyed) {
+      if (auto colliInfo = PaddleObj->CheckCollision(powerUp); std::get<0>(colliInfo)) {
+        PaddleObj->OnCollision(powerUp, colliInfo);
+        powerUp.OnCollision(*PaddleObj, colliInfo);
+      }
+    }
+  }
 }
 void Game::Reset() {
-  for (auto &lv : Levels) {
-    lv.Reset();
-  }
+  std::for_each(Levels.begin(), Levels.end(), [](GameLevel &lv) { lv.Reset(); });
   PaddleObj->Reset(this->Width, this->Height);
   BallObj->Reset(*PaddleObj);
+  PostProcessor::Instance().EndEffect(E_EffectType::All);
+  PowerUpSystem.Reset();
+}
+
+void Game::spawnPowerUps(GameObject &block) {
+  // spawn chance will be 1 / chance
+  auto ShouldSpawn = [](unsigned int chance) -> bool {
+    unsigned int random = rand() % chance;
+    return random == 0u;
+  };
+
+  if (ShouldSpawn(3)) {
+    PowerUpSystem.RandomGenerate(block.Position);
+  }
 }
 
 void Game::Fail() {

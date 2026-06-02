@@ -10,5 +10,5 @@ public:
 
 public:
   virtual CollisionInfo_Type CheckCollision(const GameObject &other) { return {false, (BoundMaskType)E_CrossBound::Nope}; }
-  virtual void OnCollision(const GameObject &other, CollisionInfo_Type &collisionInfo) {};
+  virtual void OnCollision(GameObject &other, CollisionInfo_Type &collisionInfo) {};
 };

@@ -8,8 +8,7 @@
 #include "Ball.hpp"
 #include "GameLevel.hpp"
 #include "Paddle.hpp"
-#include "ParticleGenerator.hpp"
-#include "PostProcessor.hpp"
+#include "PowerUpModule.hpp"
 #include <GLFW/glfw3.h>
 #include <memory>
 enum class GameState {
@@ -40,8 +39,8 @@ public:
   int curr_level = 0;
   std::unique_ptr<Paddle> PaddleObj;
   std::unique_ptr<Ball> BallObj;
-  std::unique_ptr<ParticleGenertor> ParticleSystem;
-  std::unique_ptr<PostProcessor> PostProcessorModule;
+  // std::vector<PowerUp> PowerUps;
+  PowerUpModule PowerUpSystem;
 
 private:
   void initShader(Camera &mainCamera, Path &projroot);
@@ -51,7 +50,8 @@ private:
   void initBall();
   void initParticleSystem();
   void initPostProcessor(int framebuffer_width, int framebuffer_height);
+  void initPrefabsManager();
+  void initPowerUpSystem();
 
-private:
-  float shakeTime_ = 0.f;
+  void spawnPowerUps(GameObject &block);
 };

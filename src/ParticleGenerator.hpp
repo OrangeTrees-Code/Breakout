@@ -4,12 +4,18 @@
 #include "ParticleObject.hpp"
 #include "Shader.tpp"
 #include "Texture2D.hpp"
+#include "InitKey.hpp"
+#include <memory>
 #include <stack>
 #include <vector>
-class ParticleGenertor {
+class ParticleGenerator {
+
 public:
-  ParticleGenertor(int totalNum, int newNum, const glm::vec2 &offset, Shader &sdr, Texture2D &tex) : TotalNum_Particles(totalNum), NewNum_Particle(newNum), Offset(offset), shader(&sdr), sprite(&tex) { init(); }
-  ~ParticleGenertor() { glDeleteVertexArrays(1, &vao_); }
+  static ParticleGenerator &Instance();
+  static void Init(InitKey, int totalNum, int newNum, const glm::vec2 &offset, Shader &sdr, Texture2D &tex);
+  ParticleGenerator(const ParticleGenerator &other) = delete;
+  ParticleGenerator &operator=(const ParticleGenerator &other) = delete;
+  ~ParticleGenerator() { glDeleteVertexArrays(1, &vao_); }
   void Update(float deltaTime, GameObject &object);
   void Render();
   Shader &GetShader() { return *shader; }
@@ -23,12 +29,14 @@ public:
   glm::vec2 Offset;
 
 private:
+  ParticleGenerator(int totalNum, int newNum, const glm::vec2 &offset, Shader &sdr, Texture2D &tex) : TotalNum_Particles(totalNum), NewNum_Particle(newNum), Offset(offset), shader(&sdr), sprite(&tex) { init(); }
   int getFirstUnuesdIndex();
   void respawnParticle(ParticleObject &particle, GameObject &object);
   void init();
   void initVAO();
 
 private:
+  static std::unique_ptr<ParticleGenerator> instance_;
   std::vector<ParticleObject> particles_;
   std::stack<int> unuesdIndex_;
   unsigned int vao_;

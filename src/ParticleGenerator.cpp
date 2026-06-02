@@ -7,7 +7,22 @@
 #include <cstdlib>
 #include <ranges>
 #include <stdexcept>
-void ParticleGenertor::init() {
+
+std::unique_ptr<ParticleGenerator> ParticleGenerator::instance_ = nullptr;
+
+
+ParticleGenerator &ParticleGenerator::Instance() {
+  if (!instance_) {
+    throw std::runtime_error("ParticleGenerator has not been initialized");
+  }
+  return *instance_;
+}
+
+void ParticleGenerator::Init(InitKey, int totalNum, int newNum, const glm::vec2 &offset, Shader &sdr, Texture2D &tex) {
+  instance_ = std::unique_ptr<ParticleGenerator>(new ParticleGenerator(totalNum,newNum,offset,sdr,tex));
+}
+
+void ParticleGenerator::init() {
   particles_.resize(TotalNum_Particles);
   unuesdIndex_.push_range(std::views::iota(0, 500) | std::views::reverse);
 
@@ -19,11 +34,11 @@ void ParticleGenertor::init() {
   glBufferData(GL_ARRAY_BUFFER, sizeof(Quad::unitVertices), Quad::unitVertices.data(), GL_STATIC_DRAW);
   glEnableVertexAttribArray(0);
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void *)0);
-  glBindBuffer(GL_ARRAY_BUFFER,0);
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
   glBindVertexArray(0);
 }
 
-int ParticleGenertor::getFirstUnuesdIndex() {
+int ParticleGenerator::getFirstUnuesdIndex() {
   if (unuesdIndex_.empty()) {
     return -1;
   }
@@ -31,7 +46,7 @@ int ParticleGenertor::getFirstUnuesdIndex() {
   unuesdIndex_.pop();
 }
 
-void ParticleGenertor::respawnParticle(ParticleObject &particle, GameObject &object) {
+void ParticleGenerator::respawnParticle(ParticleObject &particle, GameObject &object) {
   float random = ((rand() % 100) - 50) / 10.f;
   float rColor = 0.5f + ((rand() % 100) / 100.f);
   particle.Position = object.Position + random + Offset;
@@ -45,7 +60,7 @@ void ParticleGenertor::respawnParticle(ParticleObject &particle, GameObject &obj
   }
 };
 
-void ParticleGenertor::Render() {
+void ParticleGenerator::Render() {
   if (shader == nullptr || sprite == nullptr) {
     throw std::runtime_error("Generator is not complete!");
   }
@@ -67,7 +82,7 @@ void ParticleGenertor::Render() {
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
-void ParticleGenertor::Update(float deltaTime, GameObject &object) {
+void ParticleGenerator::Update(float deltaTime, GameObject &object) {
   for (int i = 0; i < NewNum_Particle; ++i) {
     if (int unesed = getFirstUnuesdIndex(); unesed != -1) {
       respawnParticle(particles_[unesed], object);
