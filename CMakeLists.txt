@@ -38,6 +38,8 @@ add_executable(game
     src/PowerUpModule.cpp
     src/InitKey.hpp
     src/PrefabsManager.cpp
+    src/AudioSystem.cpp
+    src/miniaudio.c
 )
 
 target_include_directories(game PRIVATE

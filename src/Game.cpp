@@ -1,4 +1,5 @@
 #include "Game.hpp"
+#include "AudioSystem.hpp"
 #include "Camera.hpp"
 #include "Paddle.hpp"
 #include "ParticleGenerator.hpp"
@@ -32,6 +33,10 @@ void Game::Init(Camera &mainCamera, int framebuffer_width, int framebuffer_heigh
   initPrefabsManager();
 
   initPowerUpSystem();
+
+  initAudioSystem(projroot);
+
+  AudioSystem::Instance().Play("BGM", true);
 }
 
 void Game::Render() {
@@ -209,6 +214,15 @@ void Game::initPowerUpSystem() {
   PowerUpSystem.Weights["PowerUp_Confuse"] = 1.f / PowerUpSystem.TotalPowUp;
   PowerUpSystem.Weights["PowerUp_Chaos"] = 1.f / PowerUpSystem.TotalPowUp;
 }
+
+void Game::initAudioSystem(Path &projroot) {
+  AudioSystem::Init(InitKey());
+  AudioSystem::Instance().LoadMusic("BGM", projroot / "res/music/breakout.mp3");
+  AudioSystem::Instance().LoadSound("bleepOnBrick", projroot / "res/sounds/bleep.mp3");
+  AudioSystem::Instance().LoadSound("solid", projroot / "res/sounds/solid.wav");
+  AudioSystem::Instance().LoadSound("powerup", projroot / "res/sounds/powerup.wav");
+  AudioSystem::Instance().LoadSound("bleepOnPaddle", projroot / "res/sounds/bleep.wav");
+}
 void Game::DoCollision() {
 
   for (auto &brick : Levels[curr_level].Bricks) {
@@ -218,6 +232,7 @@ void Game::DoCollision() {
           brick.OnCollision(*BallObj, colliInfo);
           BallObj->OnCollision(brick, colliInfo);
           if (brick.IsSolid == false) {
+            AudioSystem::Instance().Play("bleepOnBrick");
             this->Levels[this->curr_level].DestroyableCount--;
             if (this->Levels[curr_level].IsCompleted()) {
               ++this->curr_level;
@@ -225,7 +240,9 @@ void Game::DoCollision() {
             }
             spawnPowerUps(brick);
           } else {
-            PostProcessor::Instance().StartEffect(E_EffectType::Shake, 0.15f);
+            AudioSystem::Instance().Play("solid");
+            PostProcessor::Instance()
+                .StartEffect(E_EffectType::Shake, 0.15f);
           }
         }
       }
@@ -235,11 +252,15 @@ void Game::DoCollision() {
     }
   }
   if (auto colliInfo = BallObj->CheckCollision(*PaddleObj); std::get<0>(colliInfo)) {
+    if (BallObj->IsStuck == false) {
+      AudioSystem::Instance().Play("bleepOnPaddle");
+    }
     BallObj->OnCollision(*PaddleObj, colliInfo);
   }
   for (auto &powerUp : PowerUpSystem.PowerUps) {
     if (!powerUp.Destroyed) {
       if (auto colliInfo = PaddleObj->CheckCollision(powerUp); std::get<0>(colliInfo)) {
+        AudioSystem::Instance().Play("powerup");
         PaddleObj->OnCollision(powerUp, colliInfo);
         powerUp.OnCollision(*PaddleObj, colliInfo);
       }

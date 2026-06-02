@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Global.cpp"
+#include "Global.hpp"
 #include "Shader.tpp"
 #include "Texture2D.hpp"
 #include <string>

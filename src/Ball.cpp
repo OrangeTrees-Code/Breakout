@@ -163,6 +163,7 @@ void Ball::handleColliWithPaddleY(const GameObject &other, bool isUp) {
 void Ball::Reset(const Paddle &paddle) {
   this->IsStuck = true;
   this->Position = paddle.Position + glm::vec2(paddle.Size.x / 2.f - Radius, -Radius * 2.f - 0.01f);
+  this->shouldUpdateOffset_ = true;
   this->Velocity = glm::vec2(100.0f, -350.0f);
   this->IsPassThrough = false;
 }

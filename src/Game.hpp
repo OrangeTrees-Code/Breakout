@@ -52,6 +52,7 @@ private:
   void initPostProcessor(int framebuffer_width, int framebuffer_height);
   void initPrefabsManager();
   void initPowerUpSystem();
+  void initAudioSystem(Path &projroot);
 
   void spawnPowerUps(GameObject &block);
 };

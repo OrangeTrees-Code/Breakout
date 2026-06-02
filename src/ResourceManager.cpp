@@ -1,5 +1,6 @@
 #include "ResourceManager.hpp"
 #include "Shader.tpp"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 #include <fstream>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Brick.hpp"
-#include "Global.cpp"
+#include "Global.hpp"
 #include "SpriteRenderer.hpp"
 class GameLevel {
 public:
